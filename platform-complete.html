@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Used Car Training Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+        }
+        
+        /* Header */
+        .header {
+            background: #1e3a8a;
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .notification-badge {
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+        }
+        
+        /* Navigation */
+        .nav {
+            background: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 1rem;
+            overflow-x: auto;
+        }
+        
+        .nav-item {
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            color: #64748b;
+            border-radius: 0.5rem;
+            transition: all 0.3s;
+            white-space: nowrap;
+            font-size: 1rem;
+        }
+        
+        .nav-item.active {
+            background: #1e3a8a;
+            color: white;
+        }
+        
+        .nav-item:hover:not(.active) {
+            background: #e0e7ff;
+            color: #1e3a8a;
+        }
+        
+        /* Tab Content */
+        .tab-panel {
+            display: none;
+        }
+        
+        .tab-panel.active {
+            display: block;
+        }
+        
+        /* Main Content */
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        
+        .page-title {
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            color: #1e3a8a;
+        }
+        
+        /* Common Components */
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1e3a8a;
+            margin-bottom: 1.5rem;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background: #1e3a8a;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 500;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+        
+        .btn:hover {
+            background: #1e40af;
+        }
+        
+        .btn-secondary {
+            background: #64748b;
+        }
+        
+        .btn-secondary:hover {
+            background: #475569;
+        }
+        
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        /* KPI Cards */
+        .kpi-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .kpi-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .kpi-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .kpi-label {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+        }
+        
+        .kpi-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #1e3a8a;
+            margin-bottom: 0.5rem;
+        }
+        
+        .kpi-trend {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .trend-up { color: #10b981; }
+        .trend-down { color: #ef4444; }
+        .trend-neutral { color: #64748b; }
+        
+        /* Chart Section */
+        .chart-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        
+        .chart-placeholder {
+            height: 300px;
+            background: linear-gradient(to top, #e0e7ff 0%, transparent 100%);
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+        }
+        
+        /* Progress Bar */
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: #e0e7ff;
+            border-radius: 1rem;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(to right, #3b82f6, #1e3a8a);
+            transition: width 0.3s;
+        }
+        
+        /* Content Cards */
+        .content-card {
+            background: white;
+            border: 2px solid #e0e7ff;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .content-card:hover {
+            border-color: #1e3a8a;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .content-thumbnail {
+            width: 100%;
+            height: 150px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .content-title {
+            font-weight: 600;
+            color: #1e3a8a;
+            margin-bottom: 0.5rem;
+        }
+        
+        .content-meta {
+            display: flex;
+            gap: 1rem;
+            color: #64748b;
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .rating {
+            color: #fbbf24;
+        }
+        
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            display: block;
+            font-weight: 500;
+            color: #1e3a8a;
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e0e7ff;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #1e3a8a;
+        }
+        
+        /* Best Practice Card */
+        .bp-card {
+            background: white;
+            border: 2px solid #e0e7ff;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .bp-header {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .bp-tag {
+            background: #e0e7ff;
+            color: #1e3a8a;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.85rem;
+        }
+        
+        .bp-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #1e3a8a;
+            margin-bottom: 0.75rem;
+        }
+        
+        .bp-stats {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+        
+        .bp-summary {
+            color: #64748b;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+        
+        .bp-actions {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        /* Quick Actions */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .quick-action-btn {
+            padding: 1rem;
+            background: white;
+            border: 2px solid #e0e7ff;
+            border-radius: 0.75rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            color: #1e3a8a;
+            font-weight: 500;
+        }
+        
+        .quick-action-btn:hover {
+            background: #1e3a8a;
+            color: white;
+            border-color: #1e3a8a;
+        }
+        
+        .quick-action-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Action List */
+        .action-list {
+            list-style: none;
+        }
+        
+        .action-item {
+            padding: 1rem;
+            background: white;
+            border: 2px solid #e0e7ff;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .action-checkbox {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+        }
+        
+        .action-content {
+            flex: 1;
+        }
+        
+        .action-title {
+            font-weight: 600;
+            color: #1e3a8a;
+            margin-bottom: 0.25rem;
+        }
+        
+        .action-status {
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+        
+        /* Search Bar */
+        .search-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .search-input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e0e7ff;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+        }
+        
+        .filter-btn {
+            padding: 0.75rem 1.5rem;
+            background: white;
+            border: 2px solid #e0e7ff;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 500;
+            color: #1e3a8a;
+        }
+        
+        .filter-btn:hover {
+            background: #e0e7ff;
+        }
+        
+        /* Tabs (for sub-sections) */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #e0e7ff;
+            overflow-x: auto;
+        }
+        
+        .tab {
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            color: #64748b;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+        
+        .tab.active {
+            color: #1e3a8a;
+            border-bottom-color: #1e3a8a;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 1rem;
+            }
+            
+            .kpi-cards {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">🚗 Used Car Training Platform</div>
+        <div class="user-info">
+            <div class="notification-badge">
+                <span>🔔</span>
+                <span class="badge">3</span>
+            </div>
+            <div>A代理店 / 山田太郎</div>
+            <div>🌐 日本語</div>
+        </div>
+    </div>
+    
+    <!-- Navigation Tabs -->
+    <nav class="nav">
+        <button class="nav-item active" onclick="switchPage('dashboard')">📊 Dashboard</button>
+        <button class="nav-item" onclick="switchPage('analysis')">📈 Analysis</button>
+        <button class="nav-item" onclick="switchPage('learning')">📚 Learning</button>
+        <button class="nav-item" onclick="switchPage('management')">⚙️ Management</button>
+        <button class="nav-item" onclick="switchPage('community')">👥 Community</button>
+    </nav>
+    
+    <!-- Dashboard Tab -->
+    <div id="dashboard" class="tab-panel active">
+        <div class="container">
+            <h1 class="page-title">📊 Dashboard</h1>
+            
+            <!-- KPI Cards -->
+            <div class="kpi-cards">
+                <div class="kpi-card">
+                    <div class="kpi-label">中古車小売台数</div>
+                    <div class="kpi-value">62<span style="font-size:1rem">台/月</span></div>
+                    <div class="kpi-trend trend-up">
+                        <span>↑</span>
+                        <span>+12% (前月比)</span>
+                    </div>
+                    <div class="kpi-trend trend-up">
+                        <span style="font-size:0.85rem">T0比: +24%</span>
+                    </div>
+                </div>
+                
+                <div class="kpi-card">
+                    <div class="kpi-label">総仕入台数</div>
+                    <div class="kpi-value">68<span style="font-size:1rem">台/月</span></div>
+                    <div class="kpi-trend trend-up">
+                        <span>↑</span>
+                        <span>+6% (前月比)</span>
+                    </div>
+                    <div class="kpi-trend trend-up">
+                        <span style="font-size:0.85rem">T0比: +40%</span>
+                    </div>
+                </div>
+                
+                <div class="kpi-card">
+                    <div class="kpi-label">台当り粗利</div>
+                    <div class="kpi-value">$1,180<span style="font-size:1rem">/台</span></div>
+                    <div class="kpi-trend trend-down">
+                        <span>↓</span>
+                        <span>-3% (前月比)</span>
+                    </div>
+                    <div class="kpi-trend trend-down">
+                        <span style="font-size:0.85rem">T0比: -2%</span>
+                    </div>
+                </div>
+                
+                <div class="kpi-card">
+                    <div class="kpi-label">商品化リードタイム</div>
+                    <div class="kpi-value">12<span style="font-size:1rem">日</span></div>
+                    <div class="kpi-trend trend-neutral">
+                        <span>→</span>
+                        <span>0% (前月比)</span>
+                    </div>
+                    <div class="kpi-trend trend-up">
+                        <span style="font-size:0.85rem">T0比: -10%</span>
+                    </div>
+                </div>
+                
+                <div class="kpi-card">
+                    <div class="kpi-label">販売在庫期間</div>
+                    <div class="kpi-value">40<span style="font-size:1rem">日</span></div>
+                    <div class="kpi-trend trend-up">
+                        <span>↑</span>
+                        <span>+5% (前月比)</span>
+                    </div>
+                    <div class="kpi-trend trend-up">
+                        <span style="font-size:0.85rem">T0比: -12%</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Chart Section -->
+            <div class="chart-section">
+                <div class="chart-placeholder">
+                    📊 KPIトレンドグラフ (中古車小売台数: 50台 → 62台)
+                </div>
+            </div>
+            
+            <!-- Grid Layout -->
+            <div class="grid-2">
+                <!-- Diagnosis Summary -->
+                <div class="card">
+                    <div class="card-title">🔍 診断サマリー</div>
+                    <div style="display:inline-block;background:#fbbf24;color:white;padding:0.5rem 1rem;border-radius:2rem;font-weight:600;margin-bottom:1rem">B型: 一部成功群</div>
+                    <p style="color:#64748b;line-height:1.6;margin-bottom:1rem">
+                        <strong>改善中</strong><br>
+                        台数系KPIは順調に改善していますが、収益性の改善が課題です。
+                    </p>
+                    <div style="margin-bottom:1rem">
+                        <div style="font-weight:500;margin-bottom:0.5rem">総合改善スコア</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 65%"></div>
+                        </div>
+                        <div style="font-size:0.9rem;color:#64748b">65 / 100点</div>
+                    </div>
+                    <button class="btn" style="width:100%" onclick="switchPage('analysis')">詳細分析を見る →</button>
+                </div>
+                
+                <!-- Action Plan Progress -->
+                <div class="card">
+                    <div class="card-title">📋 アクションプラン進捗</div>
+                    <div style="margin-bottom:1rem">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 62.5%"></div>
+                        </div>
+                        <div style="font-size:0.9rem;color:#64748b">実施率: 62.5% (5/8アクション)</div>
+                    </div>
+                    <ul class="action-list">
+                        <li class="action-item">
+                            <span style="font-size:1.2rem">✅</span>
+                            <span>査定提案の強化</span>
+                        </li>
+                        <li class="action-item">
+                            <span style="font-size:1.2rem">✅</span>
+                            <span>仕入チャネル拡大</span>
+                        </li>
+                        <li class="action-item">
+                            <span style="font-size:1.2rem">🔄</span>
+                            <span>商品化プロセス改善</span>
+                        </li>
+                        <li class="action-item">
+                            <span style="font-size:1.2rem">⚠️</span>
+                            <span>小売仕分けルール徹底</span>
+                        </li>
+                    </ul>
+                    <button class="btn btn-secondary" style="width:100%;margin-top:1rem" onclick="switchPage('management')">詳細を見る →</button>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-title">⚡ クイックアクセス</div>
+                <div class="quick-actions">
+                    <a href="#" class="quick-action-btn" onclick="switchPage('management'); return false;">
+                        <div class="quick-action-icon">📝</div>
+                        <div>データ入力</div>
+                    </a>
+                    <a href="#" class="quick-action-btn" onclick="switchPage('analysis'); return false;">
+                        <div class="quick-action-icon">📊</div>
+                        <div>分析を見る</div>
+                    </a>
+                    <a href="#" class="quick-action-btn" onclick="switchPage('learning'); return false;">
+                        <div class="quick-action-icon">📚</div>
+                        <div>研修資料</div>
+                    </a>
+                    <a href="#" class="quick-action-btn" onclick="switchPage('community'); return false;">
+                        <div class="quick-action-icon">🏆</div>
+                        <div>好事例を探す</div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Analysis Tab -->
+    <div id="analysis" class="tab-panel">
+        <div class="container">
+            <h1 class="page-title">📈 Analysis - 分析結果</h1>
+            
+            <div class="card">
+                <div class="card-title">🔍 現状診断</div>
+                <div style="display:inline-block;background:#fbbf24;color:white;padding:0.75rem 1.5rem;border-radius:2rem;font-size:1.2rem;font-weight:600;margin-bottom:1rem">B型: 一部成功群</div>
+                <p style="color:#64748b;line-height:1.8;margin-bottom:2rem">
+                    台数系KPIは順調に改善していますが、実践の定着にまだムラがあります。<br>
+                    定着率を高めることで、さらなる改善が期待できます。
+                </p>
+                
+                <div style="background:#f8fafc;padding:1.5rem;border-radius:0.5rem">
+                    <h3 style="color:#1e3a8a;margin-bottom:1rem;">あなたのポジション</h3>
+                    <div style="font-size:3rem;text-align:center;padding:2rem;background:white;border-radius:0.5rem">
+                        改善度: 高 ✅<br>
+                        実践定着度: 中 🔄<br>
+                        <div style="font-size:1.5rem;margin-top:1rem;color:#fbbf24">→ B型: 一部成功群</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">🎯 AIによる改善提案 TOP3</div>
+                <div class="grid-3">
+                    <div style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:white;padding:1.5rem;border-radius:0.75rem">
+                        <div style="font-size:2rem;font-weight:bold;margin-bottom:0.5rem">🥇 優先度1</div>
+                        <div style="font-size:1.1rem;font-weight:600;margin-bottom:0.75rem">台当り粗利の改善</div>
+                        <div style="opacity:0.9;line-height:1.6;margin-bottom:1rem">
+                            <strong>理由:</strong> 台数は増えているが収益性が低下<br>
+                            <strong>効果:</strong> +$150/台の改善見込み<br>
+                            <strong>所要:</strong> 週10分
+                        </div>
+                        <button class="btn" style="background:rgba(255,255,255,0.2)" onclick="switchPage('learning')">実施方法を見る →</button>
+                    </div>
+                    
+                    <div style="background:linear-gradient(135deg, #f093fb 0%, #f5576c 100%);color:white;padding:1.5rem;border-radius:0.75rem">
+                        <div style="font-size:2rem;font-weight:bold;margin-bottom:0.5rem">🥈 優先度2</div>
+                        <div style="font-size:1.1rem;font-weight:600;margin-bottom:0.75rem">リードタイム短縮</div>
+                        <div style="opacity:0.9;line-height:1.6;margin-bottom:1rem">
+                            <strong>理由:</strong> トップ企業は9日(あなた12日)<br>
+                            <strong>効果:</strong> 在庫回転率+10%<br>
+                            <strong>所要:</strong> 初回1時間、その後週15分
+                        </div>
+                        <button class="btn" style="background:rgba(255,255,255,0.2)" onclick="switchPage('learning')">実施方法を見る →</button>
+                    </div>
+                    
+                    <div style="background:linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);color:white;padding:1.5rem;border-radius:0.75rem">
+                        <div style="font-size:2rem;font-weight:bold;margin-bottom:0.5rem">🥉 優先度3</div>
+                        <div style="font-size:1.1rem;font-weight:600;margin-bottom:0.75rem">データ分析の習慣化</div>
+                        <div style="opacity:0.9;line-height:1.6;margin-bottom:1rem">
+                            <strong>理由:</strong> 定着していないが効果が高い<br>
+                            <strong>効果:</strong> 意思決定の質向上<br>
+                            <strong>所要:</strong> 毎日5分
+                        </div>
+                        <button class="btn" style="background:rgba(255,255,255,0.2)" onclick="switchPage('learning')">実施方法を見る →</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">📈 あなたの成長軌跡</div>
+                <div style="background:#ecfdf5;padding:2rem;border-radius:0.5rem">
+                    <div style="display:flex;justify-content:space-around;text-align:center">
+                        <div>
+                            <div style="font-weight:600;color:#64748b;margin-bottom:0.5rem">研修前(T0)</div>
+                            <div style="font-size:2rem;font-weight:bold;color:#ef4444">50点</div>
+                            <div style="color:#64748b">D型</div>
+                        </div>
+                        <div style="font-size:2rem;color:#64748b">→</div>
+                        <div>
+                            <div style="font-weight:600;color:#64748b;margin-bottom:0.5rem">現在(5ヶ月)</div>
+                            <div style="font-size:2rem;font-weight:bold;color:#fbbf24">65点</div>
+                            <div style="color:#64748b">B型</div>
+                        </div>
+                        <div style="font-size:2rem;color:#64748b">→</div>
+                        <div>
+                            <div style="font-weight:600;color:#64748b;margin-bottom:0.5rem">目標(12ヶ月)</div>
+                            <div style="font-size:2rem;font-weight:bold;color:#10b981">80点</div>
+                            <div style="color:#64748b">A型</div>
+                        </div>
+                    </div>
+                    <p style="font-size:1.2rem;font-weight:600;color:#047857;text-align:center;margin-top:2rem">
+                        🎉 あなたは着実に成長しています!
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Learning Tab -->
+    <div id="learning" class="tab-panel">
+        <div class="container">
+            <h1 class="page-title">📚 Learning Contents</h1>
+            
+            <!-- Search Bar -->
+            <div class="search-bar">
+                <input type="text" class="search-input" placeholder="🔍 コンテンツを検索...">
+                <button class="filter-btn">カテゴリ ▼</button>
+                <button class="filter-btn">フィルター</button>
+            </div>
+            
+            <!-- Recommended Learning -->
+            <div class="card">
+                <div class="card-title">💡 あなたへの推奨学習</div>
+                <p style="color:#64748b;margin-bottom:1.5rem">あなたの課題「台当り粗利の改善」に基づく学習パス(所要60分)</p>
+                <div class="grid-3">
+                    <div class="content-card">
+                        <div class="content-thumbnail" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%)">
+                            📊
+                        </div>
+                        <div class="content-title">小売vs卸売の判断基準</div>
+                        <div class="content-meta">
+                            <span>⏱️ 15分</span>
+                            <span>🎥 動画</span>
+                        </div>
+                        <div class="rating">⭐⭐⭐⭐⭐ (4.8)</div>
+                        <div class="progress-bar" style="margin-top:0.5rem">
+                            <div class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <button class="btn" style="width:100%;margin-top:1rem">学習を開始 →</button>
+                    </div>
+                    
+                    <div class="content-card">
+                        <div class="content-thumbnail" style="background:linear-gradient(135deg, #f093fb 0%, #f5576c 100%)">
+                            🎯
+                        </div>
+                        <div class="content-title">高粗利車両の見極め方</div>
+                        <div class="content-meta">
+                            <span>⏱️ 20分</span>
+                            <span>🎥 動画</span>
+                        </div>
+                        <div class="rating">⭐⭐⭐⭐⭐ (4.9)</div>
+                        <div class="progress-bar" style="margin-top:0.5rem">
+                            <div class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <button class="btn" style="width:100%;margin-top:1rem">学習を開始 →</button>
+                    </div>
+                    
+                    <div class="content-card">
+                        <div class="content-thumbnail" style="background:linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)">
+                            🛠️
+                        </div>
+                        <div class="content-title">仕分け判断ツールの使い方</div>
+                        <div class="content-meta">
+                            <span>⏱️ 10分</span>
+                            <span>📄 PDF</span>
+                        </div>
+                        <div class="rating">⭐⭐⭐⭐ (4.5)</div>
+                        <div class="progress-bar" style="margin-top:0.5rem">
+                            <div class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <button class="btn" style="width:100%;margin-top:1rem">ダウンロード ↓</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- All Content -->
+            <div class="card">
+                <div class="card-title">📖 研修セッション別コンテンツ</div>
+                <div class="grid-3">
+                    <div class="content-card">
+                        <div class="content-thumbnail">🚗</div>
+                        <div class="content-title">Session 1: 中古車市場概況</div>
+                        <div class="content-meta">
+                            <span>⏱️ 30分</span>
+                            <span>🎥 動画</span>
+                        </div>
+                        <div class="rating">⭐⭐⭐⭐ (4.2)</div>
+                        <div class="progress-bar" style="margin-top:0.5rem">
+                            <div class="progress-fill" style="width: 100%"></div>
+                        </div>
+                        <div style="margin-top:0.5rem;color:#10b981;font-size:0.9rem">✅ 視聴済み</div>
+                    </div>
+                    
+                    <div class="content-card">
+                        <div class="content-thumbnail">📋</div>
+                        <div class="content-title">Session 2: 仕入戦略・査定スキル</div>
+                        <div class="content-meta">
+                            <span>⏱️ 45分</span>
+                            <span>🎥 動画</span>
+                        </div>
+                        <div class="rating">⭐⭐⭐⭐⭐ (4.8)</div>
+                        <div class="progress-bar" style="margin-top:0.5rem">
+                            <div class="progress-fill" style="width: 80%"></div>
+                        </div>
+                        <button class="btn btn-secondary" style="width:100%;margin-top:1rem">続きから視聴 →</button>
+                    </div>
+                    
+                    <div class="content-card">
+                        <div class="content-thumbnail">⚙️</div>
+                        <div class="content-title">Session 3: 商品化プロセス最適化</div>
+                        <div class="content-meta">
+                            <span>⏱️ 40分</span>
+                            <span>🎥 動画</span>
+                        </div>
+                        <div class="rating">⭐⭐⭐⭐ (4.6)</div>
+                        <div class="progress-bar" style="margin-top:0.5rem">
+                            <div class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <button class="btn" style="width:100%;margin-top:1rem">視聴する →</button>
+                    </div>
+                    
+                    <div class="content-card">
+                        <div class="content-thumbnail">📢</div>
+                        <div class="content-title">Session 4: 販売マーケティング</div>
+                        <div class="content-meta">
+                            <span>⏱️ 35分</span>
+                            <span>🎥 動画</span>
+                        </div>
+                        <div class="rating">⭐⭐⭐⭐⭐ (4.7)</div>
+                        <div class="progress-bar" style="margin-top:0.5rem">
+                            <div class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <button class="btn" style="width:100%;margin-top:1rem">視聴する →</button>
+                    </div>
+                    
+                    <div class="content-card">
+                        <div class="content-thumbnail">📦</div>
+                        <div class="content-title">Session 5: 在庫管理</div>
+                        <div class="content-meta">
+                            <span>⏱️ 30分</span>
+                            <span>🎥 動画</span>
+                        </div>
+                        <div class="rating">⭐⭐⭐⭐ (4.4)</div>
+                        <div class="progress-bar" style="margin-top:0.5rem">
+                            <div class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <button class="btn" style="width:100%;margin-top:1rem">視聴する →</button>
+                    </div>
+                    
+                    <div class="content-card">
+                        <div class="content-thumbnail">💰</div>
+                        <div class="content-title">Session 6: 収益性管理</div>
+                        <div class="content-meta">
+                            <span>⏱️ 35分</span>
+                            <span>🎥 動画</span>
+                        </div>
+                        <div class="rating">⭐⭐⭐⭐⭐ (4.9)</div>
+                        <div class="progress-bar" style="margin-top:0.5rem">
+                            <div class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <button class="btn" style="width:100%;margin-top:1rem">視聴する →</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Management Tab -->
+    <div id="management" class="tab-panel">
+        <div class="container">
+            <h1 class="page-title">⚙️ Management</h1>
+            
+            <!-- Today's Tasks -->
+            <div class="card" style="background:#fff3cd;border:2px solid #ffc107">
+                <div class="card-title" style="color:#856404">⚠️ 今月のタスク</div>
+                <div style="display:flex;gap:1rem;align-items:center;margin-bottom:1rem">
+                    <span style="font-size:2rem">📝</span>
+                    <div style="flex:1">
+                        <div style="font-weight:600;color:#856404">KPIデータ未入力(2月分)</div>
+                        <div style="color:#856404;font-size:0.9rem">締切: 2026年3月5日</div>
+                    </div>
+                    <button class="btn">今すぐ入力 →</button>
+                </div>
+            </div>
+            
+            <!-- KPI Input -->
+            <div class="card">
+                <div class="card-title">📊 KPIデータ入力</div>
+                <div class="form-group">
+                    <label class="form-label">対象月</label>
+                    <select class="form-input">
+                        <option>2026年2月</option>
+                        <option>2026年1月</option>
+                        <option>2025年12月</option>
+                    </select>
+                </div>
+                
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1.5rem">
+                    <div class="form-group">
+                        <label class="form-label">中古車小売台数</label>
+                        <input type="number" class="form-input" placeholder="62" value="62">
+                        <div style="font-size:0.85rem;color:#64748b;margin-top:0.25rem">前月: 60台 (前月比: +3.3% ↑)</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">総仕入台数</label>
+                        <input type="number" class="form-input" placeholder="68" value="68">
+                        <div style="font-size:0.85rem;color:#64748b;margin-top:0.25rem">前月: 65台 (前月比: +4.6% ↑)</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">台当り粗利 (USD)</label>
+                        <input type="number" class="form-input" placeholder="1180" value="1180">
+                        <div style="font-size:0.85rem;color:#64748b;margin-top:0.25rem">前月: $1,220 (前月比: -3.3% ↓)</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">商品化リードタイム (日)</label>
+                        <input type="number" class="form-input" placeholder="12" value="12">
+                        <div style="font-size:0.85rem;color:#64748b;margin-top:0.25rem">前月: 13日 (前月比: -7.7% ↑)</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">販売在庫期間 (日)</label>
+                        <input type="number" class="form-input" placeholder="40" value="40">
+                        <div style="font-size:0.85rem;color:#64748b;margin-top:0.25rem">前月: 42日 (前月比: -4.8% ↑)</div>
+                    </div>
+                </div>
+                
+                <div style="display:flex;gap:1rem;margin-top:2rem">
+                    <button class="btn btn-secondary">下書き保存</button>
+                    <button class="btn">送信</button>
+                </div>
+            </div>
+            
+            <!-- Action Plan Management -->
+            <div class="card">
+                <div class="card-title">📋 アクションプラン管理</div>
+                <div style="margin-bottom:1.5rem">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 62.5%"></div>
+                    </div>
+                    <div style="font-size:0.9rem;color:#64748b;margin-top:0.5rem">実施率: 62.5% (5/8アクション)</div>
+                </div>
+                
+                <div style="margin-bottom:1.5rem">
+                    <h3 style="color:#1e3a8a;margin-bottom:1rem">✅ 定着しているアクション(5件)</h3>
+                    <ul class="action-list">
+                        <li class="action-item">
+                            <input type="checkbox" class="action-checkbox" checked disabled>
+                            <div class="action-content">
+                                <div class="action-title">査定提案の強化</div>
+                                <div class="action-status">実施頻度: 毎日 | 効果: 仕入+18%</div>
+                            </div>
+                            <button class="btn btn-secondary">編集</button>
+                        </li>
+                        <li class="action-item">
+                            <input type="checkbox" class="action-checkbox" checked disabled>
+                            <div class="action-content">
+                                <div class="action-title">仕入チャネル拡大</div>
+                                <div class="action-status">実施頻度: 毎日 | 効果: 仕入+18%</div>
+                            </div>
+                            <button class="btn btn-secondary">編集</button>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div style="margin-bottom:1.5rem">
+                    <h3 style="color:#fbbf24;margin-bottom:1rem">🔄 実施中のアクション(2件)</h3>
+                    <ul class="action-list">
+                        <li class="action-item">
+                            <input type="checkbox" class="action-checkbox">
+                            <div class="action-content">
+                                <div class="action-title">商品化チェックリスト活用</div>
+                                <div class="action-status">実施頻度: 週3回 | 課題: 忙しい時は忘れる</div>
+                            </div>
+                            <button class="btn btn-secondary">編集</button>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 style="color:#ef4444;margin-bottom:1rem">⚠️ 未着手のアクション(1件)</h3>
+                    <ul class="action-list">
+                        <li class="action-item" style="border-color:#ef4444">
+                            <input type="checkbox" class="action-checkbox">
+                            <div class="action-content">
+                                <div class="action-title">小売仕分けルール徹底</div>
+                                <div class="action-status">できていない理由: やり方が分からない</div>
+                            </div>
+                            <button class="btn" style="background:#3b82f6" onclick="switchPage('learning')">学習コンテンツ →</button>
+                        </li>
+                    </ul>
+                </div>
+                
+                <button class="btn" style="margin-top:1.5rem">+ 新しいアクション追加</button>
+            </div>
+            
+            <!-- Goal Setting -->
+            <div class="card">
+                <div class="card-title">🎯 目標KPI設定</div>
+                <div class="form-group">
+                    <label class="form-label">目標達成期限</label>
+                    <select class="form-input">
+                        <option>2026年12月</option>
+                        <option>2026年6月</option>
+                    </select>
+                </div>
+                
+                <table style="width:100%;border-collapse:collapse">
+                    <thead>
+                        <tr style="border-bottom:2px solid #e0e7ff">
+                            <th style="text-align:left;padding:1rem;color:#1e3a8a">KPI</th>
+                            <th style="text-align:center;padding:1rem;color:#1e3a8a">現状</th>
+                            <th style="text-align:center;padding:1rem;color:#1e3a8a">目標</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom:1px solid #e0e7ff">
+                            <td style="padding:1rem">中古車小売台数</td>
+                            <td style="padding:1rem;text-align:center">62台</td>
+                            <td style="padding:1rem;text-align:center"><input type="number" class="form-input" value="75" style="width:100px"></td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #e0e7ff">
+                            <td style="padding:1rem">総仕入台数</td>
+                            <td style="padding:1rem;text-align:center">68台</td>
+                            <td style="padding:1rem;text-align:center"><input type="number" class="form-input" value="85" style="width:100px"></td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #e0e7ff">
+                            <td style="padding:1rem">台当り粗利</td>
+                            <td style="padding:1rem;text-align:center">$1,180</td>
+                            <td style="padding:1rem;text-align:center"><input type="number" class="form-input" value="1350" style="width:100px"></td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <button class="btn" style="margin-top:1.5rem">目標を保存</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Community Tab -->
+    <div id="community" class="tab-panel">
+        <div class="container">
+            <h1 class="page-title">👥 Community</h1>
+            
+            <!-- Search Bar -->
+            <div class="search-bar">
+                <input type="text" class="search-input" placeholder="🔍 好事例を検索...">
+                <button class="filter-btn">課題タイプ ▼</button>
+                <button class="filter-btn">KPI別 ▼</button>
+            </div>
+            
+            <!-- Popular Best Practices -->
+            <div class="card">
+                <div class="card-title">🏆 人気の好事例</div>
+                
+                <div class="bp-card">
+                    <div class="bp-header">
+                        <span class="bp-tag">仕入</span>
+                        <span class="bp-tag">粗利改善</span>
+                        <span class="bp-tag">東南アジア</span>
+                    </div>
+                    <div class="bp-title">🏆 A社の台当り粗利改善事例</div>
+                    <div class="bp-stats">
+                        <span>📈 改善率: +15%</span>
+                        <span>⏱️ 期間: 3ヶ月</span>
+                        <span>🏢 規模: 中型</span>
+                    </div>
+                    <div class="bp-summary">
+                        仕分けルールの徹底と価格最適化で粗利を大幅改善。ツールの活用が鍵となり、$1,200から$1,380へと改善しました。
+                    </div>
+                    <div style="margin-bottom:1rem">
+                        <span style="color:#fbbf24">⭐⭐⭐⭐⭐</span>
+                        <span style="color:#64748b;margin-left:0.5rem">(4.8) 42件の「参考になった」</span>
+                    </div>
+                    <div class="bp-actions">
+                        <button class="btn">詳細を見る →</button>
+                        <button class="btn btn-secondary">💾 保存</button>
+                        <button class="btn btn-secondary">📤 共有</button>
+                    </div>
+                </div>
+                
+                <div class="bp-card">
+                    <div class="bp-header">
+                        <span class="bp-tag">商品化</span>
+                        <span class="bp-tag">リードタイム</span>
+                        <span class="bp-tag">中東</span>
+                    </div>
+                    <div class="bp-title">🏆 D社の商品化リードタイム短縮事例</div>
+                    <div class="bp-stats">
+                        <span>📈 改善率: -25%</span>
+                        <span>⏱️ 期間: 2ヶ月</span>
+                        <span>🏢 規模: 大型</span>
+                    </div>
+                    <div class="bp-summary">
+                        ボトルネック分析により外注工程を見直し、15日から9日へ短縮。チェックリストの導入で品質も向上しました。
+                    </div>
+                    <div style="margin-bottom:1rem">
+                        <span style="color:#fbbf24">⭐⭐⭐⭐⭐</span>
+                        <span style="color:#64748b;margin-left:0.5rem">(4.9) 38件の「参考になった」</span>
+                    </div>
+                    <div class="bp-actions">
+                        <button class="btn">詳細を見る →</button>
+                        <button class="btn btn-secondary">💾 保存</button>
+                        <button class="btn btn-secondary">📤 共有</button>
+                    </div>
+                </div>
+                
+                <div class="bp-card">
+                    <div class="bp-header">
+                        <span class="bp-tag">販売</span>
+                        <span class="bp-tag">在庫回転</span>
+                        <span class="bp-tag">アフリカ</span>
+                    </div>
+                    <div class="bp-title">🏆 E社の販売在庫期間短縮事例</div>
+                    <div class="bp-stats">
+                        <span>📈 改善率: -30%</span>
+                        <span>⏱️ 期間: 4ヶ月</span>
+                        <span>🏢 規模: 小型</span>
+                    </div>
+                    <div class="bp-summary">
+                        オンライン販売チャネルの追加と価格戦略の見直しにより、50日から35日へ短縮。SNSマーケティングが効果的でした。
+                    </div>
+                    <div style="margin-bottom:1rem">
+                        <span style="color:#fbbf24">⭐⭐⭐⭐</span>
+                        <span style="color:#64748b;margin-left:0.5rem">(4.6) 29件の「参考になった」</span>
+                    </div>
+                    <div class="bp-actions">
+                        <button class="btn">詳細を見る →</button>
+                        <button class="btn btn-secondary">💾 保存</button>
+                        <button class="btn btn-secondary">📤 共有</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Monthly Ranking -->
+            <div class="card">
+                <div class="card-title">🏅 今月のランキング</div>
+                <div style="background:#f8fafc;padding:1.5rem;border-radius:0.5rem">
+                    <div style="display:flex;justify-content:space-around;text-align:center">
+                        <div>
+                            <div style="font-size:3rem;margin-bottom:0.5rem">🥇</div>
+                            <div style="font-weight:600;color:#1e3a8a">C社</div>
+                            <div style="color:#64748b;font-size:0.9rem">KPI改善率</div>
+                            <div style="font-size:1.5rem;font-weight:bold;color:#10b981">+22%</div>
+                        </div>
+                        <div>
+                            <div style="font-size:3rem;margin-bottom:0.5rem">🥈</div>
+                            <div style="font-weight:600;color:#1e3a8a">A社</div>
+                            <div style="color:#64748b;font-size:0.9rem">KPI改善率</div>
+                            <div style="font-size:1.5rem;font-weight:bold;color:#10b981">+18%</div>
+                        </div>
+                        <div style="background:#fff3cd;padding:1rem;border-radius:0.5rem">
+                            <div style="font-size:3rem;margin-bottom:0.5rem">🥉</div>
+                            <div style="font-weight:600;color:#1e3a8a">あなたの会社</div>
+                            <div style="color:#64748b;font-size:0.9rem">KPI改善率</div>
+                            <div style="font-size:1.5rem;font-weight:bold;color:#10b981">+15%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Upcoming Events -->
+            <div class="card">
+                <div class="card-title">📅 開催予定イベント</div>
+                <div style="display:flex;gap:1.5rem;align-items:center;padding:1.5rem;background:#f8fafc;border-radius:0.5rem">
+                    <div style="font-size:3rem">📅</div>
+                    <div style="flex:1">
+                        <div style="font-weight:600;color:#1e3a8a;font-size:1.2rem">6ヶ月レビューセッション</div>
+                        <div style="color:#64748b;margin-top:0.5rem">
+                            日時: 2026年3月15日 14:00-15:30 (JST)<br>
+                            形式: オンライン(Zoom)<br>
+                            内容: 成功事例共有、Q&Aセッション
+                        </div>
+                    </div>
+                    <button class="btn">参加登録 →</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function switchPage(pageId) {
+            // Hide all tab panels
+            const panels = document.querySelectorAll('.tab-panel');
+            panels.forEach(panel => {
+                panel.classList.remove('active');
+            });
+            
+            // Remove active class from all nav items
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Show selected panel
+            document.getElementById(pageId).classList.add('active');
+            
+            // Add active class to corresponding nav item
+            const navIndex = ['dashboard', 'analysis', 'learning', 'management', 'community'].indexOf(pageId);
+            navItems[navIndex].classList.add('active');
+            
+            // Scroll to top
+            window.scrollTo(0, 0);
+        }
+    </script>
+</body>
+</html>

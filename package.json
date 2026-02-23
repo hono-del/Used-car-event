@@ -1,0 +1,9 @@
+{
+  "name": "used-car-training-platform",
+  "version": "1.0.0",
+  "description": "Used Car Training Platform - Mock UI",
+  "scripts": {
+    "dev": "npx serve .",
+    "start": "npx serve ."
+  }
+}
