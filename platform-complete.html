@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Used Car Training Platform</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -515,7 +516,15 @@
                 <span>🔔</span>
                 <span class="badge">3</span>
             </div>
-            <div>A代理店 / 山田太郎</div>
+            <select id="dealerSelector" style="padding:0.5rem 1rem;border-radius:0.5rem;background:white;color:#1e3a8a;font-weight:500;cursor:pointer;border:2px solid #e0e7ff;">
+                <option value="ADMIN">👤 管理者</option>
+                <option value="D001">A代理店 (日本)</option>
+                <option value="D002">B代理店 (タイ)</option>
+                <option value="D003">C代理店 (UAE)</option>
+                <option value="D004">D代理店 (南アフリカ)</option>
+                <option value="D005">E代理店 (メキシコ)</option>
+            </select>
+            <div id="userName">A代理店 / 山田太郎</div>
             <div>🌐 日本語</div>
         </div>
     </div>
@@ -599,8 +608,21 @@
             
             <!-- Chart Section -->
             <div class="chart-section">
-                <div class="chart-placeholder">
-                    📊 KPIトレンドグラフ (中古車小売台数: 50台 → 62台)
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem">
+                    <div style="font-size:1.3rem;font-weight:600;color:#1e3a8a">📈 KPIトレンド(過去12ヶ月)</div>
+                    <div style="display:flex;gap:1rem">
+                        <select id="kpiSelector" style="padding:0.5rem 1rem;border:1px solid #cbd5e1;border-radius:0.5rem;background:white;cursor:pointer">
+                            <option value="retail">中古車小売台数</option>
+                            <option value="purchase">総仕入台数</option>
+                            <option value="profit">台当り粗利</option>
+                            <option value="leadtime">商品化リードタイム</option>
+                            <option value="inventory">販売在庫期間</option>
+                        </select>
+                    </div>
+                </div>
+                <canvas id="kpiChart" style="max-height:300px"></canvas>
+                <div style="margin-top:1rem;padding:1rem;background:#f8fafc;border-radius:0.5rem">
+                    <div id="chartSummary" style="color:#64748b;font-size:0.9rem"></div>
                 </div>
             </div>
             
@@ -680,22 +702,126 @@
         </div>
     </div>
     
+    <!-- Admin Dashboard Panel -->
+    <div id="admin-dashboard" class="tab-panel" style="display:none;">
+        <div class="container">
+            <h1 class="page-title">👤 管理者ダッシュボード - 全体状況</h1>
+            
+            <!-- Summary Cards -->
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1.5rem;margin-bottom:2rem">
+                <!-- Total Dealers Card -->
+                <div style="background:white;padding:1.5rem;border-radius:1rem;box-shadow:0 2px 4px rgba(0,0,0,0.1)">
+                    <div style="color:#64748b;font-size:0.9rem;margin-bottom:0.5rem">参加代理店数</div>
+                    <div style="font-size:2.5rem;font-weight:700;color:#1e3a8a">5</div>
+                    <div style="color:#10b981;font-size:0.9rem;margin-top:0.5rem">🌍 5カ国</div>
+                </div>
+                
+                <!-- Success Rate Card -->
+                <div style="background:white;padding:1.5rem;border-radius:1rem;box-shadow:0 2px 4px rgba(0,0,0,0.1)">
+                    <div style="color:#64748b;font-size:0.9rem;margin-bottom:0.5rem">順調群（A・B型）</div>
+                    <div style="font-size:2.5rem;font-weight:700;color:#10b981" id="adminSuccessCount">4</div>
+                    <div style="color:#64748b;font-size:0.9rem;margin-top:0.5rem" id="adminSuccessRate">80%</div>
+                </div>
+                
+                <!-- Warning Rate Card -->
+                <div style="background:white;padding:1.5rem;border-radius:1rem;box-shadow:0 2px 4px rgba(0,0,0,0.1)">
+                    <div style="color:#64748b;font-size:0.9rem;margin-bottom:0.5rem">要注意群（C・D・E型）</div>
+                    <div style="font-size:2.5rem;font-weight:700;color:#ef4444" id="adminWarningCount">1</div>
+                    <div style="color:#64748b;font-size:0.9rem;margin-top:0.5rem" id="adminWarningRate">20%</div>
+                </div>
+                
+                <!-- Average Score Card -->
+                <div style="background:white;padding:1.5rem;border-radius:1rem;box-shadow:0 2px 4px rgba(0,0,0,0.1)">
+                    <div style="color:#64748b;font-size:0.9rem;margin-bottom:0.5rem">平均実践スコア</div>
+                    <div style="font-size:2.5rem;font-weight:700;color:#f59e0b" id="adminAvgScore">67.6</div>
+                    <div style="color:#64748b;font-size:0.9rem;margin-top:0.5rem">/ 100点</div>
+                </div>
+            </div>
+            
+            <!-- Dealer Type Distribution Chart -->
+            <div style="background:white;padding:2rem;border-radius:1rem;box-shadow:0 2px 4px rgba(0,0,0,0.1);margin-bottom:2rem">
+                <h2 style="font-size:1.3rem;font-weight:600;color:#1e3a8a;margin-bottom:1.5rem">📊 代理店タイプ分布</h2>
+                <canvas id="adminTypeChart" style="max-height:300px"></canvas>
+            </div>
+            
+            <!-- KPI Progress Comparison -->
+            <div style="background:white;padding:2rem;border-radius:1rem;box-shadow:0 2px 4px rgba(0,0,0,0.1);margin-bottom:2rem">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem">
+                    <h2 style="font-size:1.3rem;font-weight:600;color:#1e3a8a">📈 全代理店KPI進捗状況</h2>
+                    <select id="adminKpiSelector" style="padding:0.5rem 1rem;border:1px solid #cbd5e1;border-radius:0.5rem;background:white;cursor:pointer">
+                        <option value="retail">中古車小売台数</option>
+                        <option value="purchase">総仕入台数</option>
+                        <option value="profit">台当り粗利</option>
+                        <option value="leadtime">商品化リードタイム</option>
+                        <option value="inventory">販売在庫期間</option>
+                    </select>
+                </div>
+                <canvas id="adminKpiChart" style="max-height:400px"></canvas>
+            </div>
+            
+            <!-- Dealer List Table -->
+            <div style="background:white;padding:2rem;border-radius:1rem;box-shadow:0 2px 4px rgba(0,0,0,0.1)">
+                <h2 style="font-size:1.3rem;font-weight:600;color:#1e3a8a;margin-bottom:1.5rem">📋 代理店一覧</h2>
+                <div style="overflow-x:auto">
+                    <table style="width:100%;border-collapse:collapse">
+                        <thead>
+                            <tr style="background:#f8fafc;border-bottom:2px solid #e2e8f0">
+                                <th style="padding:1rem;text-align:left;font-weight:600;color:#475569">代理店</th>
+                                <th style="padding:1rem;text-align:left;font-weight:600;color:#475569">国</th>
+                                <th style="padding:1rem;text-align:center;font-weight:600;color:#475569">タイプ</th>
+                                <th style="padding:1rem;text-align:right;font-weight:600;color:#475569">スコア</th>
+                                <th style="padding:1rem;text-align:right;font-weight:600;color:#475569">実施率</th>
+                                <th style="padding:1rem;text-align:right;font-weight:600;color:#475569">T0比改善</th>
+                                <th style="padding:1rem;text-align:right;font-weight:600;color:#475569">目標達成率</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminDealerTable">
+                            <!-- Populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Analysis Tab -->
-    <div id="analysis" class="tab-panel">
+    <div id="analysis" class="tab-panel" style="display:none;">
         <div class="container">
             <h1 class="page-title">📈 Analysis - 分析結果</h1>
             
             <div class="card">
                 <div class="card-title">🔍 現状診断</div>
-                <div style="display:inline-block;background:#fbbf24;color:white;padding:0.75rem 1.5rem;border-radius:2rem;font-size:1.2rem;font-weight:600;margin-bottom:1rem">B型: 一部成功群</div>
-                <p style="color:#64748b;line-height:1.8;margin-bottom:2rem">
+                <div style="display:inline-block;background:#fbbf24;color:white;padding:0.75rem 1.5rem;border-radius:2rem;font-size:1.2rem;font-weight:600;margin-bottom:1rem" id="analysisType">B型: 一部成功群</div>
+                <p style="color:#64748b;line-height:1.8;margin-bottom:2rem" id="analysisDescription">
                     台数系KPIは順調に改善していますが、実践の定着にまだムラがあります。<br>
                     定着率を高めることで、さらなる改善が期待できます。
                 </p>
                 
+                <!-- KPI別診断詳細 -->
+                <div style="background:#f8fafc;padding:1.5rem;border-radius:0.5rem;margin-bottom:2rem">
+                    <h3 style="color:#1e3a8a;margin-bottom:1.5rem;font-size:1.2rem">📊 KPI別診断（5軸評価）</h3>
+                    <div style="overflow-x:auto">
+                        <table style="width:100%;border-collapse:collapse;background:white;border-radius:0.5rem;overflow:hidden">
+                            <thead>
+                                <tr style="background:#1e3a8a;color:white">
+                                    <th style="padding:1rem;text-align:left;font-weight:600">KPI指標</th>
+                                    <th style="padding:1rem;text-align:center;font-weight:600">T0→現在<br>改善度</th>
+                                    <th style="padding:1rem;text-align:center;font-weight:600">改善率</th>
+                                    <th style="padding:1rem;text-align:center;font-weight:600">実践定着度</th>
+                                    <th style="padding:1rem;text-align:center;font-weight:600">目標達成度</th>
+                                    <th style="padding:1rem;text-align:left;font-weight:600">診断コメント</th>
+                                </tr>
+                            </thead>
+                            <tbody id="kpiAnalysisTable">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
                 <div style="background:#f8fafc;padding:1.5rem;border-radius:0.5rem">
-                    <h3 style="color:#1e3a8a;margin-bottom:1rem;">あなたのポジション</h3>
-                    <div style="font-size:3rem;text-align:center;padding:2rem;background:white;border-radius:0.5rem">
+                    <h3 style="color:#1e3a8a;margin-bottom:1rem;">総合ポジション</h3>
+                    <div style="font-size:2rem;text-align:center;padding:2rem;background:white;border-radius:0.5rem" id="overallPosition">
                         改善度: 高 ✅<br>
                         実践定着度: 中 🔄<br>
                         <div style="font-size:1.5rem;margin-top:1rem;color:#fbbf24">→ B型: 一部成功群</div>
@@ -772,7 +898,7 @@
     </div>
     
     <!-- Learning Tab -->
-    <div id="learning" class="tab-panel">
+    <div id="learning" class="tab-panel" style="display:none;">
         <div class="container">
             <h1 class="page-title">📚 Learning Contents</h1>
             
@@ -931,7 +1057,7 @@
     </div>
     
     <!-- Management Tab -->
-    <div id="management" class="tab-panel">
+    <div id="management" class="tab-panel" style="display:none;">
         <div class="container">
             <h1 class="page-title">⚙️ Management</h1>
             
@@ -944,7 +1070,13 @@
                         <div style="font-weight:600;color:#856404">KPIデータ未入力(2月分)</div>
                         <div style="color:#856404;font-size:0.9rem">締切: 2026年3月5日</div>
                     </div>
-                    <button class="btn">今すぐ入力 →</button>
+                    <div style="display:flex;flex-direction:column;gap:0.5rem">
+                        <button class="btn">今すぐ入力 →</button>
+                        <button class="btn" style="background:#1e3a8a;border:none;display:flex;align-items:center;justify-content:center;gap:0.5rem">
+                            <span>🔗</span>
+                            <span>Dealer systemと連携</span>
+                        </button>
+                    </div>
                 </div>
             </div>
             
@@ -1001,64 +1133,74 @@
             <!-- Action Plan Management -->
             <div class="card">
                 <div class="card-title">📋 アクションプラン管理</div>
-                <div style="margin-bottom:1.5rem">
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: 62.5%"></div>
+                
+                <!-- サマリーカード -->
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:2rem">
+                    <div style="background:#dcfce7;padding:1rem;border-radius:0.5rem;text-align:center">
+                        <div style="font-size:2rem;font-weight:700;color:#166534" id="settledCount">2</div>
+                        <div style="color:#166534;font-size:0.9rem">✅ 定着</div>
                     </div>
-                    <div style="font-size:0.9rem;color:#64748b;margin-top:0.5rem">実施率: 62.5% (5/8アクション)</div>
+                    <div style="background:#fef3c7;padding:1rem;border-radius:0.5rem;text-align:center">
+                        <div style="font-size:2rem;font-weight:700;color:#92400e" id="ongoingCount">1</div>
+                        <div style="color:#92400e;font-size:0.9rem">🔄 実施中</div>
+                    </div>
+                    <div style="background:#fee2e2;padding:1rem;border-radius:0.5rem;text-align:center">
+                        <div style="font-size:2rem;font-weight:700;color:#991b1b" id="notStartedCount">1</div>
+                        <div style="color:#991b1b;font-size:0.9rem">⚠️ 未着手</div>
+                    </div>
                 </div>
                 
-                <div style="margin-bottom:1.5rem">
-                    <h3 style="color:#1e3a8a;margin-bottom:1rem">✅ 定着しているアクション(5件)</h3>
-                    <ul class="action-list">
-                        <li class="action-item">
-                            <input type="checkbox" class="action-checkbox" checked disabled>
-                            <div class="action-content">
-                                <div class="action-title">査定提案の強化</div>
-                                <div class="action-status">実施頻度: 毎日 | 効果: 仕入+18%</div>
-                            </div>
-                            <button class="btn btn-secondary">編集</button>
-                        </li>
-                        <li class="action-item">
-                            <input type="checkbox" class="action-checkbox" checked disabled>
-                            <div class="action-content">
-                                <div class="action-title">仕入チャネル拡大</div>
-                                <div class="action-status">実施頻度: 毎日 | 効果: 仕入+18%</div>
-                            </div>
-                            <button class="btn btn-secondary">編集</button>
-                        </li>
-                    </ul>
+                <!-- ステータス判定基準の説明 -->
+                <div style="background:#f0f9ff;padding:1rem;border-radius:0.5rem;margin-bottom:2rem;border-left:4px solid #3b82f6">
+                    <div style="font-weight:600;color:#1e40af;margin-bottom:0.5rem">📊 ステータス自動判定基準</div>
+                    <div style="font-size:0.85rem;color:#1e3a8a;line-height:1.6">
+                        <strong>✅ 定着:</strong> 実施率80%以上 かつ 4週間以上継続<br>
+                        <strong>🔄 実施中:</strong> 実施率50-79% または 継続期間2-3週間<br>
+                        <strong>⚠️ 未着手:</strong> 実施率50%未満 または 開始後1週間未満
+                    </div>
                 </div>
                 
-                <div style="margin-bottom:1.5rem">
-                    <h3 style="color:#fbbf24;margin-bottom:1rem">🔄 実施中のアクション(2件)</h3>
-                    <ul class="action-list">
-                        <li class="action-item">
-                            <input type="checkbox" class="action-checkbox">
-                            <div class="action-content">
-                                <div class="action-title">商品化チェックリスト活用</div>
-                                <div class="action-status">実施頻度: 週3回 | 課題: 忙しい時は忘れる</div>
-                            </div>
-                            <button class="btn btn-secondary">編集</button>
-                        </li>
-                    </ul>
+                <!-- アクションプラン一覧（カード形式） -->
+                <div id="actionPlanList">
+                    <!-- Populated by JavaScript -->
                 </div>
                 
-                <div>
-                    <h3 style="color:#ef4444;margin-bottom:1rem">⚠️ 未着手のアクション(1件)</h3>
-                    <ul class="action-list">
-                        <li class="action-item" style="border-color:#ef4444">
-                            <input type="checkbox" class="action-checkbox">
-                            <div class="action-content">
-                                <div class="action-title">小売仕分けルール徹底</div>
-                                <div class="action-status">できていない理由: やり方が分からない</div>
-                            </div>
-                            <button class="btn" style="background:#3b82f6" onclick="switchPage('learning')">学習コンテンツ →</button>
-                        </li>
-                    </ul>
+                <button class="btn" style="width:100%;margin-top:1rem;background:#10b981" onclick="alert('新しいアクションプランを追加')">
+                    ➕ 新しいアクションプランを追加
+                </button>
+            </div>
+            
+            <!-- アクションとKPIの紐づき分析 -->
+            <div class="card">
+                <div class="card-title">📈 アクション効果分析 - KPIとの紐づき</div>
+                <p style="color:#64748b;margin-bottom:1.5rem;line-height:1.6">
+                    各アクションプランの実施状況と、対応するKPI指標の改善度を可視化します
+                </p>
+                
+                <div style="overflow-x:auto">
+                    <table style="width:100%;border-collapse:collapse;background:white">
+                        <thead>
+                            <tr style="background:#1e3a8a;color:white">
+                                <th style="padding:1rem;text-align:left">アクションプラン</th>
+                                <th style="padding:1rem;text-align:center">ステータス</th>
+                                <th style="padding:1rem;text-align:center">実施率</th>
+                                <th style="padding:1rem;text-align:left">影響するKPI</th>
+                                <th style="padding:1rem;text-align:center">KPI改善度</th>
+                                <th style="padding:1rem;text-align:left">因果関係</th>
+                            </tr>
+                        </thead>
+                        <tbody id="actionKpiLinkTable">
+                            <!-- Populated by JavaScript -->
+                        </tbody>
+                    </table>
                 </div>
                 
-                <button class="btn" style="margin-top:1.5rem">+ 新しいアクション追加</button>
+                <div style="margin-top:1.5rem;padding:1rem;background:#fef3c7;border-radius:0.5rem;border-left:4px solid #f59e0b">
+                    <div style="font-weight:600;color:#92400e;margin-bottom:0.5rem">💡 インサイト</div>
+                    <div style="font-size:0.9rem;color:#78350f;line-height:1.6" id="actionInsight">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
             </div>
             
             <!-- Goal Setting -->
@@ -1105,7 +1247,7 @@
     </div>
     
     <!-- Community Tab -->
-    <div id="community" class="tab-panel">
+    <div id="community" class="tab-panel" style="display:none;">
         <div class="container">
             <h1 class="page-title">👥 Community</h1>
             
@@ -1246,29 +1388,1034 @@
     </div>
     
     <script>
+        // ダミーデータ
+        const dealersData = {
+            "D001": {
+                name: "A代理店",
+                country: "日本",
+                user: "山田太郎",
+                currentKPI: { retail: 62, purchase: 68, profit: 1180, leadtime: 12, inventory: 40 },
+                t0KPI: { retail: 50, purchase: 45, profit: 1200, leadtime: 12, inventory: 45 },
+                previousKPI: { retail: 60, purchase: 65, profit: 1220, leadtime: 13, inventory: 42 },
+                diagnosis: { type: "B型", score: 65, improvement: 4, practiceRate: 62.5, t0Comparison: 15 },
+                targets: { retail: 75, purchase: 85, profit: 1350, leadtime: 9, inventory: 35 },
+                kpiHistory: {
+                    labels: ["2025年8月\n(T0)", "2026年1月\n(T1)", "2026年2月\n(現在)", "2026年12月\n(目標)"],
+                    retail: [50, 58, 62, 75],
+                    purchase: [45, 62, 68, 85],
+                    profit: [1200, 1220, 1180, 1350],
+                    leadtime: [12, 11, 12, 9],
+                    inventory: [45, 42, 40, 35]
+                },
+                kpiAnalysis: {
+                    retail: { improvement: "高", improvementRate: 24, practice: "高", practiceRate: 80, targetAchievement: 82.7, comment: "順調に改善。このペースを維持" },
+                    purchase: { improvement: "高", improvementRate: 51, practice: "中", practiceRate: 65, targetAchievement: 80.0, comment: "急成長。実践を定着させる段階" },
+                    profit: { improvement: "低", improvementRate: -1.7, practice: "低", practiceRate: 40, targetAchievement: 87.4, comment: "要改善。台数増で粗利が圧迫" },
+                    leadtime: { improvement: "低", improvementRate: 0, practice: "中", practiceRate: 55, targetAchievement: 75.0, comment: "横ばい。プロセス見直しが必要" },
+                    inventory: { improvement: "中", improvementRate: 11, practice: "高", practiceRate: 75, targetAchievement: 87.5, comment: "改善傾向。さらに短縮可能" }
+                },
+                actionPlans: [
+                    {
+                        id: 1,
+                        title: "査定提案の強化",
+                        status: "settled",
+                        implementationRate: 85,
+                        startDate: "2025-10-01",
+                        weeksContinued: 20,
+                        frequency: "毎日",
+                        relatedKPI: ["purchase", "retail"],
+                        kpiImprovement: { purchase: 51, retail: 24 },
+                        description: "顧客への積極的な査定提案により、仕入台数を大幅に増加",
+                        challenge: "なし（定着済み）",
+                        nextAction: "継続実施"
+                    },
+                    {
+                        id: 2,
+                        title: "仕入チャネル拡大",
+                        status: "settled",
+                        implementationRate: 90,
+                        startDate: "2025-09-15",
+                        weeksContinued: 22,
+                        frequency: "毎週",
+                        relatedKPI: ["purchase"],
+                        kpiImprovement: { purchase: 51 },
+                        description: "新規オークションへの参加で仕入ルートを多様化",
+                        challenge: "なし（定着済み）",
+                        nextAction: "さらなるチャネル開拓"
+                    },
+                    {
+                        id: 3,
+                        title: "商品化チェックリスト活用",
+                        status: "ongoing",
+                        implementationRate: 65,
+                        startDate: "2026-01-10",
+                        weeksContinued: 6,
+                        frequency: "週3-4回",
+                        relatedKPI: ["leadtime"],
+                        kpiImprovement: { leadtime: 0 },
+                        description: "商品化工程の標準化でリードタイム短縮を目指す",
+                        challenge: "繁忙期は使用頻度が下がる",
+                        nextAction: "リマインダー設定、簡易版作成"
+                    },
+                    {
+                        id: 4,
+                        title: "小売仕分けルール徹底",
+                        status: "notStarted",
+                        implementationRate: 20,
+                        startDate: "2026-02-01",
+                        weeksContinued: 3,
+                        frequency: "週1回",
+                        relatedKPI: ["profit", "inventory"],
+                        kpiImprovement: { profit: -1.7, inventory: 11 },
+                        description: "高収益車両の選別精度向上で粗利改善",
+                        challenge: "ルール理解不足、実施する時間がない",
+                        nextAction: "簡易判断フロー作成、30分の個別指導"
+                    }
+                ]
+            },
+            "D002": {
+                name: "B代理店",
+                country: "タイ",
+                user: "タナポン",
+                currentKPI: { retail: 205, purchase: 198, profit: 1050, leadtime: 12, inventory: 45 },
+                t0KPI: { retail: 180, purchase: 165, profit: 980, leadtime: 15, inventory: 52 },
+                previousKPI: { retail: 195, purchase: 185, profit: 1020, leadtime: 13, inventory: 48 },
+                diagnosis: { type: "A型", score: 82, improvement: 5, practiceRate: 85.0, t0Comparison: 22 },
+                targets: { retail: 240, purchase: 230, profit: 1100, leadtime: 10, inventory: 40 },
+                kpiHistory: {
+                    labels: ["2025年8月\n(T0)", "2026年1月\n(T1)", "2026年2月\n(現在)", "2026年12月\n(目標)"],
+                    retail: [180, 195, 205, 240],
+                    purchase: [165, 185, 198, 230],
+                    profit: [980, 1020, 1050, 1100],
+                    leadtime: [15, 13, 12, 10],
+                    inventory: [52, 48, 45, 40]
+                },
+                kpiAnalysis: {
+                    retail: { improvement: "高", improvementRate: 13.9, practice: "高", practiceRate: 90, targetAchievement: 85.4, comment: "全指標で優秀。模範的な進捗" },
+                    purchase: { improvement: "高", improvementRate: 20, practice: "高", practiceRate: 85, targetAchievement: 86.1, comment: "安定した成長。継続を" },
+                    profit: { improvement: "高", improvementRate: 7.1, practice: "高", practiceRate: 85, targetAchievement: 95.5, comment: "収益性も向上。バランス良好" },
+                    leadtime: { improvement: "高", improvementRate: 20, practice: "中", practiceRate: 80, targetAchievement: 83.3, comment: "大幅改善。目標達成間近" },
+                    inventory: { improvement: "中", improvementRate: 13.5, practice: "高", practiceRate: 90, targetAchievement: 88.9, comment: "順調。回転率も改善中" }
+                },
+                actionPlans: [
+                    { id: 1, title: "査定提案の強化", status: "settled", implementationRate: 90, weeksContinued: 20, relatedKPI: ["purchase", "retail"], kpiImprovement: { purchase: 20, retail: 13.9 } },
+                    { id: 2, title: "仕入チャネル拡大", status: "settled", implementationRate: 95, weeksContinued: 22, relatedKPI: ["purchase"], kpiImprovement: { purchase: 20 } },
+                    { id: 3, title: "商品化チェックリスト活用", status: "settled", implementationRate: 85, weeksContinued: 18, relatedKPI: ["leadtime"], kpiImprovement: { leadtime: 20 } },
+                    { id: 4, title: "小売仕分けルール徹底", status: "ongoing", implementationRate: 70, weeksContinued: 8, relatedKPI: ["profit", "inventory"], kpiImprovement: { profit: 7.1, inventory: 13.5 } }
+                ]
+            },
+            "D003": {
+                name: "C代理店",
+                country: "UAE",
+                user: "アフマド",
+                currentKPI: { retail: 104, purchase: 98, profit: 1320, leadtime: 8, inventory: 30 },
+                t0KPI: { retail: 85, purchase: 78, profit: 1100, leadtime: 10, inventory: 38 },
+                previousKPI: { retail: 98, purchase: 92, profit: 1280, leadtime: 8, inventory: 32 },
+                diagnosis: { type: "A型", score: 78, improvement: 5, practiceRate: 75.0, t0Comparison: 18 },
+                targets: { retail: 120, purchase: 115, profit: 1400, leadtime: 7, inventory: 28 },
+                kpiHistory: {
+                    labels: ["2025年8月\n(T0)", "2026年1月\n(T1)", "2026年2月\n(現在)", "2026年12月\n(目標)"],
+                    retail: [85, 98, 104, 120],
+                    purchase: [78, 92, 98, 115],
+                    profit: [1100, 1280, 1320, 1400],
+                    leadtime: [10, 8, 8, 7],
+                    inventory: [38, 32, 30, 28]
+                },
+                kpiAnalysis: {
+                    retail: { improvement: "高", improvementRate: 22.4, practice: "中", practiceRate: 75, targetAchievement: 86.7, comment: "高い改善率。実践を強化すべき" },
+                    purchase: { improvement: "高", improvementRate: 25.6, practice: "高", practiceRate: 80, targetAchievement: 85.2, comment: "積極的な仕入。在庫管理に注意" },
+                    profit: { improvement: "高", improvementRate: 20, practice: "中", practiceRate: 70, targetAchievement: 94.3, comment: "高収益。この優位性を維持" },
+                    leadtime: { improvement: "高", improvementRate: 20, practice: "高", practiceRate: 85, targetAchievement: 87.5, comment: "業界トップ水準。好事例" },
+                    inventory: { improvement: "高", improvementRate: 21.1, practice: "中", practiceRate: 75, targetAchievement: 93.3, comment: "効率的な在庫管理を実現" }
+                },
+                actionPlans: [
+                    { id: 1, title: "査定提案の強化", status: "settled", implementationRate: 88, weeksContinued: 19, relatedKPI: ["purchase", "retail"], kpiImprovement: { purchase: 25.6, retail: 22.4 } },
+                    { id: 2, title: "仕入チャネル拡大", status: "settled", implementationRate: 82, weeksContinued: 16, relatedKPI: ["purchase"], kpiImprovement: { purchase: 25.6 } },
+                    { id: 3, title: "商品化チェックリスト活用", status: "settled", implementationRate: 90, weeksContinued: 20, relatedKPI: ["leadtime"], kpiImprovement: { leadtime: 20 } },
+                    { id: 4, title: "小売仕分けルール徹底", status: "ongoing", implementationRate: 68, weeksContinued: 7, relatedKPI: ["profit", "inventory"], kpiImprovement: { profit: 20, inventory: 21.1 } }
+                ]
+            },
+            "D004": {
+                name: "D代理店",
+                country: "南アフリカ",
+                user: "ムボ",
+                currentKPI: { retail: 32, purchase: 30, profit: 900, leadtime: 16, inventory: 58 },
+                t0KPI: { retail: 28, purchase: 25, profit: 950, leadtime: 18, inventory: 62 },
+                previousKPI: { retail: 30, purchase: 28, profit: 920, leadtime: 17, inventory: 60 },
+                diagnosis: { type: "D型", score: 45, improvement: 1, practiceRate: 30.0, t0Comparison: 5 },
+                targets: { retail: 40, purchase: 38, profit: 1000, leadtime: 14, inventory: 55 },
+                kpiHistory: {
+                    labels: ["2025年8月\n(T0)", "2026年1月\n(T1)", "2026年2月\n(現在)", "2026年12月\n(目標)"],
+                    retail: [28, 30, 32, 40],
+                    purchase: [25, 28, 30, 38],
+                    profit: [950, 920, 900, 1000],
+                    leadtime: [18, 17, 16, 14],
+                    inventory: [62, 60, 58, 55]
+                },
+                kpiAnalysis: {
+                    retail: { improvement: "低", improvementRate: 14.3, practice: "低", practiceRate: 30, targetAchievement: 80.0, comment: "微増だが実践不足。集中支援必要" },
+                    purchase: { improvement: "低", improvementRate: 20, practice: "低", practiceRate: 25, targetAchievement: 78.9, comment: "仕入拡大も実践が伴わず" },
+                    profit: { improvement: "低", improvementRate: -5.3, practice: "低", practiceRate: 20, targetAchievement: 90.0, comment: "悪化傾向。緊急対応が必要" },
+                    leadtime: { improvement: "低", improvementRate: 11.1, practice: "低", practiceRate: 35, targetAchievement: 87.5, comment: "改善あるが不十分。工程見直しを" },
+                    inventory: { improvement: "低", improvementRate: 6.5, practice: "低", practiceRate: 40, targetAchievement: 94.8, comment: "小幅改善。抜本的改革が必要" }
+                },
+                actionPlans: [
+                    { id: 1, title: "査定提案の強化", status: "ongoing", implementationRate: 55, weeksContinued: 4, relatedKPI: ["purchase", "retail"], kpiImprovement: { purchase: 20, retail: 14.3 } },
+                    { id: 2, title: "仕入チャネル拡大", status: "notStarted", implementationRate: 30, weeksContinued: 2, relatedKPI: ["purchase"], kpiImprovement: { purchase: 20 } },
+                    { id: 3, title: "商品化チェックリスト活用", status: "notStarted", implementationRate: 25, weeksContinued: 3, relatedKPI: ["leadtime"], kpiImprovement: { leadtime: 11.1 } },
+                    { id: 4, title: "小売仕分けルール徹底", status: "notStarted", implementationRate: 15, weeksContinued: 1, relatedKPI: ["profit", "inventory"], kpiImprovement: { profit: -5.3, inventory: 6.5 } }
+                ]
+            },
+            "D005": {
+                name: "E代理店",
+                country: "メキシコ",
+                user: "カルロス",
+                currentKPI: { retail: 78, purchase: 75, profit: 1210, leadtime: 12, inventory: 42 },
+                t0KPI: { retail: 65, purchase: 58, profit: 1150, leadtime: 14, inventory: 48 },
+                previousKPI: { retail: 72, purchase: 68, profit: 1180, leadtime: 13, inventory: 45 },
+                diagnosis: { type: "B型", score: 68, improvement: 3, practiceRate: 55.0, t0Comparison: 12 },
+                targets: { retail: 90, purchase: 88, profit: 1300, leadtime: 10, inventory: 38 },
+                kpiHistory: {
+                    labels: ["2025年8月\n(T0)", "2026年1月\n(T1)", "2026年2月\n(現在)", "2026年12月\n(目標)"],
+                    retail: [65, 72, 78, 90],
+                    purchase: [58, 68, 75, 88],
+                    profit: [1150, 1180, 1210, 1300],
+                    leadtime: [14, 13, 12, 10],
+                    inventory: [48, 45, 42, 38]
+                },
+                kpiAnalysis: {
+                    retail: { improvement: "高", improvementRate: 20, practice: "中", practiceRate: 60, targetAchievement: 86.7, comment: "改善傾向。実践定着が課題" },
+                    purchase: { improvement: "高", improvementRate: 29.3, practice: "中", practiceRate: 55, targetAchievement: 85.2, comment: "積極仕入。在庫バランス注意" },
+                    profit: { improvement: "中", improvementRate: 5.2, practice: "中", practiceRate: 50, targetAchievement: 93.1, comment: "緩やかな改善。加速余地あり" },
+                    leadtime: { improvement: "中", improvementRate: 14.3, practice: "低", practiceRate: 50, targetAchievement: 83.3, comment: "改善中も実践が不安定" },
+                    inventory: { improvement: "中", improvementRate: 12.5, practice: "中", practiceRate: 60, targetAchievement: 90.5, comment: "順調だが目標達成に要努力" }
+                },
+                actionPlans: [
+                    { id: 1, title: "査定提案の強化", status: "settled", implementationRate: 80, weeksContinued: 16, relatedKPI: ["purchase", "retail"], kpiImprovement: { purchase: 29.3, retail: 20 } },
+                    { id: 2, title: "仕入チャネル拡大", status: "ongoing", implementationRate: 65, weeksContinued: 10, relatedKPI: ["purchase"], kpiImprovement: { purchase: 29.3 } },
+                    { id: 3, title: "商品化チェックリスト活用", status: "ongoing", implementationRate: 58, weeksContinued: 6, relatedKPI: ["leadtime"], kpiImprovement: { leadtime: 14.3 } },
+                    { id: 4, title: "小売仕分けルール徹底", status: "notStarted", implementationRate: 35, weeksContinued: 4, relatedKPI: ["profit", "inventory"], kpiImprovement: { profit: 5.2, inventory: 12.5 } }
+                ]
+            }
+        };
+
+        let currentDealerId = "ADMIN";
+        let currentChart = null;
+        let currentKpiType = "retail";
+        let adminTypeChart = null;
+        let adminKpiChart = null;
+
+        function loadDealerData(dealerId) {
+            console.log('Loading dealer:', dealerId);
+            currentDealerId = dealerId;
+            
+            // 管理者の場合
+            if (dealerId === "ADMIN") {
+                showAdminDashboard();
+                return;
+            }
+            
+            // 個別代理店の場合
+            showDealerDashboard();
+            const dealer = dealersData[dealerId];
+            
+            // ユーザー名更新
+            const userName = document.getElementById('userName');
+            if (userName) {
+                userName.textContent = `${dealer.name} / ${dealer.user}`;
+            }
+            
+            // KPIカード更新
+            updateKPICards(dealer);
+            
+            // 診断サマリー更新
+            updateDiagnosisSummary(dealer);
+            
+            // Analysis タブのKPI詳細テーブル更新
+            updateKpiAnalysisTable(dealer);
+            
+            // Management タブのアクションプラン更新
+            updateActionPlanManagement(dealer);
+            
+            // グラフ描画
+            drawKpiChart(dealerId, currentKpiType);
+        }
+        
+        function updateActionPlanManagement(dealer) {
+            if (!dealer.actionPlans) return;
+            
+            // ステータスごとのカウント
+            const settled = dealer.actionPlans.filter(a => a.status === 'settled').length;
+            const ongoing = dealer.actionPlans.filter(a => a.status === 'ongoing').length;
+            const notStarted = dealer.actionPlans.filter(a => a.status === 'notStarted').length;
+            
+            document.getElementById('settledCount').textContent = settled;
+            document.getElementById('ongoingCount').textContent = ongoing;
+            document.getElementById('notStartedCount').textContent = notStarted;
+            
+            // アクションプランリスト表示
+            const listContainer = document.getElementById('actionPlanList');
+            if (!listContainer) return;
+            
+            listContainer.innerHTML = '';
+            
+            const statusConfig = {
+                settled: { label: '✅ 定着', color: '#10b981', bgColor: '#dcfce7', borderColor: '#10b981' },
+                ongoing: { label: '🔄 実施中', color: '#f59e0b', bgColor: '#fef3c7', borderColor: '#f59e0b' },
+                notStarted: { label: '⚠️ 未着手', color: '#ef4444', bgColor: '#fee2e2', borderColor: '#ef4444' }
+            };
+            
+            const kpiNames = {
+                retail: "小売台数",
+                purchase: "仕入台数",
+                profit: "粗利",
+                leadtime: "リードタイム",
+                inventory: "在庫期間"
+            };
+            
+            dealer.actionPlans.forEach(action => {
+                const config = statusConfig[action.status];
+                const kpiLabels = action.relatedKPI.map(k => kpiNames[k]).join(', ');
+                
+                const card = document.createElement('div');
+                card.style.cssText = `
+                    background: white;
+                    border: 2px solid ${config.borderColor};
+                    border-radius: 0.75rem;
+                    padding: 1.5rem;
+                    margin-bottom: 1rem;
+                    transition: all 0.3s;
+                `;
+                card.onmouseover = () => card.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+                card.onmouseout = () => card.style.boxShadow = 'none';
+                
+                card.innerHTML = `
+                    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:1rem">
+                        <div style="flex:1">
+                            <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.5rem">
+                                <span style="background:${config.bgColor};color:${config.color};padding:0.25rem 0.75rem;border-radius:0.5rem;font-size:0.85rem;font-weight:600">
+                                    ${config.label}
+                                </span>
+                                <h3 style="font-size:1.1rem;font-weight:600;color:#1e3a8a;margin:0">${action.title}</h3>
+                            </div>
+                            ${action.description ? `<p style="color:#64748b;font-size:0.9rem;line-height:1.5;margin:0">${action.description}</p>` : ''}
+                        </div>
+                        <button class="btn btn-secondary" onclick="alert('アクションプラン詳細: ${action.title}')">
+                            📝 詳細
+                        </button>
+                    </div>
+                    
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:1rem">
+                        <div>
+                            <div style="font-size:0.8rem;color:#64748b;margin-bottom:0.25rem">実施率</div>
+                            <div style="font-weight:600;color:#1e3a8a;font-size:1.1rem">${action.implementationRate}%</div>
+                            <div style="background:#e2e8f0;border-radius:0.25rem;height:4px;margin-top:0.25rem">
+                                <div style="background:${config.color};width:${action.implementationRate}%;height:100%;border-radius:0.25rem"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div style="font-size:0.8rem;color:#64748b;margin-bottom:0.25rem">継続期間</div>
+                            <div style="font-weight:600;color:#1e3a8a;font-size:1.1rem">${action.weeksContinued}週間</div>
+                        </div>
+                        <div>
+                            <div style="font-size:0.8rem;color:#64748b;margin-bottom:0.25rem">実施頻度</div>
+                            <div style="font-weight:600;color:#1e3a8a;font-size:0.95rem">${action.frequency || 'データなし'}</div>
+                        </div>
+                        <div>
+                            <div style="font-size:0.8rem;color:#64748b;margin-bottom:0.25rem">影響KPI</div>
+                            <div style="font-weight:600;color:#1e3a8a;font-size:0.85rem">${kpiLabels}</div>
+                        </div>
+                    </div>
+                    
+                    ${action.challenge ? `
+                    <div style="background:#fef3c7;padding:0.75rem;border-radius:0.5rem;border-left:3px solid #f59e0b;margin-bottom:1rem">
+                        <div style="font-size:0.8rem;color:#92400e;font-weight:600;margin-bottom:0.25rem">🚧 課題</div>
+                        <div style="font-size:0.85rem;color:#78350f">${action.challenge}</div>
+                    </div>
+                    ` : ''}
+                    
+                    ${action.nextAction ? `
+                    <div style="background:#dbeafe;padding:0.75rem;border-radius:0.5rem;border-left:3px solid #3b82f6">
+                        <div style="font-size:0.8rem;color:#1e40af;font-weight:600;margin-bottom:0.25rem">🎯 次のアクション</div>
+                        <div style="font-size:0.85rem;color:#1e3a8a">${action.nextAction}</div>
+                    </div>
+                    ` : ''}
+                `;
+                
+                listContainer.appendChild(card);
+            });
+            
+            // アクションとKPIの紐づきテーブル更新
+            updateActionKpiLinkTable(dealer);
+        }
+        
+        function updateActionKpiLinkTable(dealer) {
+            const tbody = document.getElementById('actionKpiLinkTable');
+            if (!tbody || !dealer.actionPlans) return;
+            
+            tbody.innerHTML = '';
+            
+            const statusConfig = {
+                settled: { label: '✅ 定着', color: '#10b981', bg: '#dcfce7' },
+                ongoing: { label: '🔄 実施中', color: '#f59e0b', bg: '#fef3c7' },
+                notStarted: { label: '⚠️ 未着手', color: '#ef4444', bg: '#fee2e2' }
+            };
+            
+            const kpiNames = {
+                retail: "小売台数",
+                purchase: "仕入台数",
+                profit: "粗利",
+                leadtime: "リードタイム",
+                inventory: "在庫期間"
+            };
+            
+            dealer.actionPlans.forEach((action, index) => {
+                const config = statusConfig[action.status];
+                const kpiLabels = action.relatedKPI.map(k => kpiNames[k]).join(', ');
+                
+                // KPI改善度の平均を計算
+                const improvements = Object.values(action.kpiImprovement);
+                const avgImprovement = improvements.reduce((a, b) => a + b, 0) / improvements.length;
+                const improvementColor = avgImprovement >= 15 ? '#10b981' : avgImprovement >= 5 ? '#f59e0b' : '#ef4444';
+                const improvementLabel = avgImprovement >= 15 ? '高' : avgImprovement >= 5 ? '中' : '低';
+                
+                // 因果関係の判定
+                let causality = '';
+                if (action.status === 'settled' && avgImprovement >= 10) {
+                    causality = '✅ 強い正の相関';
+                } else if (action.status === 'ongoing' && avgImprovement >= 5) {
+                    causality = '🔄 改善の兆し';
+                } else if (action.status === 'notStarted' || avgImprovement < 5) {
+                    causality = '⚠️ 未実施または効果薄';
+                }
+                
+                const row = document.createElement('tr');
+                row.style.borderBottom = '1px solid #e2e8f0';
+                row.style.background = index % 2 === 0 ? '#ffffff' : '#f8fafc';
+                
+                row.innerHTML = `
+                    <td style="padding:1rem;font-weight:500">${action.title}</td>
+                    <td style="padding:1rem;text-align:center">
+                        <span style="display:inline-block;padding:0.35rem 0.75rem;border-radius:0.5rem;background:${config.bg};color:${config.color};font-weight:600;font-size:0.85rem">
+                            ${config.label}
+                        </span>
+                    </td>
+                    <td style="padding:1rem;text-align:center;font-weight:600;font-size:1.1rem">${action.implementationRate}%</td>
+                    <td style="padding:1rem">${kpiLabels}</td>
+                    <td style="padding:1rem;text-align:center">
+                        <span style="display:inline-block;padding:0.35rem 0.75rem;border-radius:0.5rem;background:${improvementColor}20;color:${improvementColor};font-weight:600">
+                            ${improvementLabel}
+                        </span>
+                    </td>
+                    <td style="padding:1rem;color:#64748b">${causality}</td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+            
+            // インサイトの生成
+            const insight = document.getElementById('actionInsight');
+            if (insight) {
+                const settled = dealer.actionPlans.filter(a => a.status === 'settled');
+                const notStarted = dealer.actionPlans.filter(a => a.status === 'notStarted');
+                
+                let insightText = '';
+                if (settled.length >= 2) {
+                    insightText = `定着したアクション（${settled.length}件）は平均して高いKPI改善を実現しています。`;
+                }
+                if (notStarted.length > 0) {
+                    const notStartedTitles = notStarted.map(a => `「${a.title}」`).join('、');
+                    insightText += ` ${notStartedTitles}の実施を優先することで、さらなるKPI改善が期待できます。`;
+                }
+                if (!insightText) {
+                    insightText = 'アクションプランの実施率を高めることで、KPI改善が加速します。';
+                }
+                
+                insight.textContent = insightText;
+            }
+        }
+
+        function updateKpiAnalysisTable(dealer) {
+            const tbody = document.getElementById('kpiAnalysisTable');
+            if (!tbody) return;
+            
+            tbody.innerHTML = '';
+            
+            const kpiNames = {
+                retail: "中古車小売台数",
+                purchase: "総仕入台数", 
+                profit: "台当り粗利",
+                leadtime: "商品化リードタイム",
+                inventory: "販売在庫期間"
+            };
+            
+            const kpiOrder = ['retail', 'purchase', 'profit', 'leadtime', 'inventory'];
+            
+            kpiOrder.forEach((kpi, index) => {
+                const analysis = dealer.kpiAnalysis[kpi];
+                
+                // 改善度の色とアイコン
+                const improvementColors = {
+                    '高': { bg: '#dcfce7', text: '#166534', icon: '🟢' },
+                    '中': { bg: '#fef9c3', text: '#854d0e', icon: '🟡' },
+                    '低': { bg: '#fee2e2', text: '#991b1b', icon: '🔴' }
+                };
+                
+                const practiceColors = {
+                    '高': { bg: '#dbeafe', text: '#1e3a8a', icon: '✅' },
+                    '中': { bg: '#fef3c7', text: '#92400e', icon: '🔄' },
+                    '低': { bg: '#fecaca', text: '#7f1d1d', icon: '⚠️' }
+                };
+                
+                const impColor = improvementColors[analysis.improvement];
+                const pracColor = practiceColors[analysis.practice];
+                
+                const achievementColor = analysis.targetAchievement >= 90 ? '#10b981' : 
+                                        analysis.targetAchievement >= 80 ? '#f59e0b' : '#ef4444';
+                
+                const row = document.createElement('tr');
+                row.style.borderBottom = '1px solid #e2e8f0';
+                row.style.background = index % 2 === 0 ? '#ffffff' : '#f8fafc';
+                
+                row.innerHTML = `
+                    <td style="padding:1rem;font-weight:500;color:#1e3a8a">${kpiNames[kpi]}</td>
+                    <td style="padding:1rem;text-align:center">
+                        <span style="display:inline-block;padding:0.4rem 0.8rem;border-radius:0.5rem;background:${impColor.bg};color:${impColor.text};font-weight:600">
+                            ${impColor.icon} ${analysis.improvement}
+                        </span>
+                    </td>
+                    <td style="padding:1rem;text-align:center;font-weight:500;color:${analysis.improvementRate >= 0 ? '#10b981' : '#ef4444'}">
+                        ${analysis.improvementRate > 0 ? '+' : ''}${analysis.improvementRate}%
+                    </td>
+                    <td style="padding:1rem;text-align:center">
+                        <span style="display:inline-block;padding:0.4rem 0.8rem;border-radius:0.5rem;background:${pracColor.bg};color:${pracColor.text};font-weight:600">
+                            ${pracColor.icon} ${analysis.practice} (${analysis.practiceRate}%)
+                        </span>
+                    </td>
+                    <td style="padding:1rem;text-align:center;font-weight:600;color:${achievementColor}">
+                        ${analysis.targetAchievement.toFixed(1)}%
+                    </td>
+                    <td style="padding:1rem;color:#64748b;line-height:1.5">${analysis.comment}</td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+            
+            // 診断タイプとコメントの更新
+            const typeColors = {
+                'A型': '#10b981',
+                'B型': '#3b82f6',
+                'C型': '#f59e0b',
+                'D型': '#ef4444',
+                'E型': '#991b1b'
+            };
+            
+            const typeDescriptions = {
+                'A型': '順調群 - 全指標で高い改善と実践定着を実現',
+                'B型': '一部成功群 - 改善は見られるが実践定着にムラあり',
+                'C型': '努力群 - 努力しているが成果が限定的',
+                'D型': '停滞群 - 改善・実践ともに不十分',
+                'E型': '危機群 - 緊急の集中支援が必要'
+            };
+            
+            const analysisType = document.getElementById('analysisType');
+            if (analysisType) {
+                analysisType.style.background = typeColors[dealer.diagnosis.type];
+                analysisType.textContent = `${dealer.diagnosis.type}: ${typeDescriptions[dealer.diagnosis.type].split(' - ')[0]}`;
+            }
+            
+            const analysisDescription = document.getElementById('analysisDescription');
+            if (analysisDescription) {
+                analysisDescription.innerHTML = typeDescriptions[dealer.diagnosis.type].split(' - ')[1];
+            }
+            
+            // 総合ポジションの更新
+            const overallImprovement = dealer.diagnosis.improvement >= 4 ? '高 ✅' : 
+                                       dealer.diagnosis.improvement >= 2 ? '中 🔄' : '低 ⚠️';
+            const overallPractice = dealer.diagnosis.practiceRate >= 70 ? '高 ✅' :
+                                   dealer.diagnosis.practiceRate >= 50 ? '中 🔄' : '低 ⚠️';
+            
+            const overallPosition = document.getElementById('overallPosition');
+            if (overallPosition) {
+                overallPosition.innerHTML = `
+                    改善度: ${overallImprovement}<br>
+                    実践定着度: ${overallPractice}<br>
+                    <div style="font-size:1.5rem;margin-top:1rem;color:${typeColors[dealer.diagnosis.type]}">
+                        → ${dealer.diagnosis.type}: ${typeDescriptions[dealer.diagnosis.type].split(' - ')[0]}
+                    </div>
+                `;
+            }
+        }
+
+        function showAdminDashboard() {
+            // ユーザー名更新
+            const userName = document.getElementById('userName');
+            if (userName) {
+                userName.textContent = '管理者';
+            }
+            
+            // ダッシュボード切り替え
+            document.getElementById('dashboard').style.display = 'none';
+            document.getElementById('admin-dashboard').style.display = 'block';
+            
+            // 管理者用データ計算と表示
+            calculateAdminStats();
+            drawAdminTypeChart();
+            drawAdminKpiChart(currentKpiType);
+            populateAdminDealerTable();
+        }
+        
+        function showDealerDashboard() {
+            document.getElementById('dashboard').style.display = 'block';
+            document.getElementById('admin-dashboard').style.display = 'none';
+        }
+        
+        function calculateAdminStats() {
+            const dealers = Object.values(dealersData);
+            
+            // タイプ別集計
+            let successCount = 0;
+            let warningCount = 0;
+            let totalScore = 0;
+            
+            dealers.forEach(d => {
+                if (d.diagnosis.type === 'A型' || d.diagnosis.type === 'B型') {
+                    successCount++;
+                } else {
+                    warningCount++;
+                }
+                totalScore += d.diagnosis.score;
+            });
+            
+            const avgScore = (totalScore / dealers.length).toFixed(1);
+            const successRate = ((successCount / dealers.length) * 100).toFixed(0);
+            const warningRate = ((warningCount / dealers.length) * 100).toFixed(0);
+            
+            // 表示更新
+            document.getElementById('adminSuccessCount').textContent = successCount;
+            document.getElementById('adminSuccessRate').textContent = `${successRate}%`;
+            document.getElementById('adminWarningCount').textContent = warningCount;
+            document.getElementById('adminWarningRate').textContent = `${warningRate}%`;
+            document.getElementById('adminAvgScore').textContent = avgScore;
+        }
+        
+        function drawAdminTypeChart() {
+            const ctx = document.getElementById('adminTypeChart').getContext('2d');
+            
+            // タイプ別カウント
+            const typeCounts = { 'A型': 0, 'B型': 0, 'C型': 0, 'D型': 0, 'E型': 0 };
+            Object.values(dealersData).forEach(d => {
+                typeCounts[d.diagnosis.type]++;
+            });
+            
+            if (adminTypeChart) {
+                adminTypeChart.destroy();
+            }
+            
+            adminTypeChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['A型\n(順調群)', 'B型\n(一部成功群)', 'C型\n(努力群)', 'D型\n(停滞群)', 'E型\n(危機群)'],
+                    datasets: [{
+                        label: '代理店数',
+                        data: [typeCounts['A型'], typeCounts['B型'], typeCounts['C型'], typeCounts['D型'], typeCounts['E型']],
+                        backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#991b1b'],
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1,
+                                callback: function(value) {
+                                    return value + ' 社';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function drawAdminKpiChart(kpiType) {
+            const ctx = document.getElementById('adminKpiChart').getContext('2d');
+            
+            const kpiConfigs = {
+                retail: { label: "中古車小売台数", unit: "台", color: "#3b82f6" },
+                purchase: { label: "総仕入台数", unit: "台", color: "#10b981" },
+                profit: { label: "台当り粗利", unit: "USD", color: "#f59e0b" },
+                leadtime: { label: "商品化リードタイム", unit: "日", color: "#8b5cf6", inverse: true },
+                inventory: { label: "販売在庫期間", unit: "日", color: "#ec4899", inverse: true }
+            };
+            
+            const config = kpiConfigs[kpiType];
+            const dealerIds = Object.keys(dealersData);
+            const dealerNames = dealerIds.map(id => dealersData[id].name);
+            
+            // T0, Current, Target データ
+            const t0Data = dealerIds.map(id => dealersData[id].t0KPI[kpiType]);
+            const currentData = dealerIds.map(id => dealersData[id].currentKPI[kpiType]);
+            const targetData = dealerIds.map(id => dealersData[id].targets[kpiType]);
+            
+            if (adminKpiChart) {
+                adminKpiChart.destroy();
+            }
+            
+            adminKpiChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: dealerNames,
+                    datasets: [
+                        {
+                            label: 'T0 (研修前)',
+                            data: t0Data,
+                            backgroundColor: 'rgba(148, 163, 184, 0.5)',
+                            borderColor: '#94a3b8',
+                            borderWidth: 1
+                        },
+                        {
+                            label: '現在',
+                            data: currentData,
+                            backgroundColor: config.color,
+                            borderColor: config.color,
+                            borderWidth: 1
+                        },
+                        {
+                            label: '目標',
+                            data: targetData,
+                            backgroundColor: 'rgba(239, 68, 68, 0.3)',
+                            borderColor: '#ef4444',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            type: 'line',
+                            pointRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + ' ' + config.unit;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function populateAdminDealerTable() {
+            const tbody = document.getElementById('adminDealerTable');
+            tbody.innerHTML = '';
+            
+            const dealerIds = Object.keys(dealersData);
+            
+            dealerIds.forEach(id => {
+                const dealer = dealersData[id];
+                const diag = dealer.diagnosis;
+                
+                // 目標達成率計算（小売台数ベース）
+                const achievementRate = ((dealer.currentKPI.retail / dealer.targets.retail) * 100).toFixed(1);
+                
+                // タイプ別色
+                const typeColors = {
+                    'A型': '#10b981',
+                    'B型': '#3b82f6',
+                    'C型': '#f59e0b',
+                    'D型': '#ef4444',
+                    'E型': '#991b1b'
+                };
+                
+                const row = document.createElement('tr');
+                row.style.borderBottom = '1px solid #e2e8f0';
+                row.innerHTML = `
+                    <td style="padding:1rem;font-weight:500">${dealer.name}</td>
+                    <td style="padding:1rem">${dealer.country}</td>
+                    <td style="padding:1rem;text-align:center">
+                        <span style="padding:0.25rem 0.75rem;border-radius:0.5rem;background:${typeColors[diag.type]};color:white;font-size:0.85rem;font-weight:500">${diag.type}</span>
+                    </td>
+                    <td style="padding:1rem;text-align:right;font-weight:500">${diag.score}点</td>
+                    <td style="padding:1rem;text-align:right">${diag.practiceRate}%</td>
+                    <td style="padding:1rem;text-align:right;color:${diag.t0Comparison > 0 ? '#10b981' : '#ef4444'};font-weight:500">
+                        ${diag.t0Comparison > 0 ? '+' : ''}${diag.t0Comparison}%
+                    </td>
+                    <td style="padding:1rem;text-align:right;font-weight:500;color:${parseFloat(achievementRate) >= 100 ? '#10b981' : '#64748b'}">
+                        ${achievementRate}%
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateKPICards(dealer) {
+            const kpi = dealer.currentKPI;
+            const t0 = dealer.t0KPI;
+            const prev = dealer.previousKPI;
+            
+            const kpiCards = document.querySelectorAll('.kpi-card');
+            
+            // 小売台数
+            const retailChange = ((kpi.retail - prev.retail) / prev.retail * 100).toFixed(1);
+            const retailT0 = ((kpi.retail - t0.retail) / t0.retail * 100).toFixed(0);
+            kpiCards[0].querySelector('.kpi-value').innerHTML = `${kpi.retail}<span style="font-size:1rem">台/月</span>`;
+            kpiCards[0].querySelectorAll('.kpi-trend')[0].innerHTML = `<span>${retailChange > 0 ? '↑' : retailChange < 0 ? '↓' : '→'}</span><span>${retailChange > 0 ? '+' : ''}${retailChange}% (前月比)</span>`;
+            kpiCards[0].querySelectorAll('.kpi-trend')[0].className = `kpi-trend ${retailChange > 0 ? 'trend-up' : retailChange < 0 ? 'trend-down' : 'trend-neutral'}`;
+            kpiCards[0].querySelectorAll('.kpi-trend')[1].innerHTML = `<span style="font-size:0.85rem">T0比: ${retailT0 > 0 ? '+' : ''}${retailT0}%</span>`;
+            
+            // 総仕入台数
+            const purchaseChange = ((kpi.purchase - prev.purchase) / prev.purchase * 100).toFixed(1);
+            const purchaseT0 = ((kpi.purchase - t0.purchase) / t0.purchase * 100).toFixed(0);
+            kpiCards[1].querySelector('.kpi-value').innerHTML = `${kpi.purchase}<span style="font-size:1rem">台/月</span>`;
+            kpiCards[1].querySelectorAll('.kpi-trend')[0].innerHTML = `<span>${purchaseChange > 0 ? '↑' : '↓'}</span><span>${purchaseChange > 0 ? '+' : ''}${purchaseChange}% (前月比)</span>`;
+            kpiCards[1].querySelectorAll('.kpi-trend')[0].className = `kpi-trend ${purchaseChange > 0 ? 'trend-up' : 'trend-down'}`;
+            kpiCards[1].querySelectorAll('.kpi-trend')[1].innerHTML = `<span style="font-size:0.85rem">T0比: ${purchaseT0 > 0 ? '+' : ''}${purchaseT0}%</span>`;
+            
+            // 台当り粗利
+            const profitChange = ((kpi.profit - prev.profit) / prev.profit * 100).toFixed(1);
+            const profitT0 = ((kpi.profit - t0.profit) / t0.profit * 100).toFixed(0);
+            kpiCards[2].querySelector('.kpi-value').innerHTML = `$${kpi.profit}<span style="font-size:1rem">/台</span>`;
+            kpiCards[2].querySelectorAll('.kpi-trend')[0].innerHTML = `<span>${profitChange > 0 ? '↑' : '↓'}</span><span>${profitChange > 0 ? '+' : ''}${profitChange}% (前月比)</span>`;
+            kpiCards[2].querySelectorAll('.kpi-trend')[0].className = `kpi-trend ${profitChange > 0 ? 'trend-up' : 'trend-down'}`;
+            kpiCards[2].querySelectorAll('.kpi-trend')[1].innerHTML = `<span style="font-size:0.85rem">T0比: ${profitT0 > 0 ? '+' : ''}${profitT0}%</span>`;
+            
+            // リードタイム
+            const leadtimeChange = ((kpi.leadtime - prev.leadtime) / prev.leadtime * 100).toFixed(1);
+            const leadtimeT0 = ((kpi.leadtime - t0.leadtime) / t0.leadtime * 100).toFixed(0);
+            kpiCards[3].querySelector('.kpi-value').innerHTML = `${kpi.leadtime}<span style="font-size:1rem">日</span>`;
+            kpiCards[3].querySelectorAll('.kpi-trend')[0].innerHTML = `<span>${leadtimeChange < 0 ? '↑' : leadtimeChange > 0 ? '↓' : '→'}</span><span>${leadtimeChange > 0 ? '+' : ''}${leadtimeChange}% (前月比)</span>`;
+            kpiCards[3].querySelectorAll('.kpi-trend')[0].className = `kpi-trend ${leadtimeChange < 0 ? 'trend-up' : leadtimeChange > 0 ? 'trend-down' : 'trend-neutral'}`;
+            kpiCards[3].querySelectorAll('.kpi-trend')[1].innerHTML = `<span style="font-size:0.85rem">T0比: ${leadtimeT0}%</span>`;
+            
+            // 在庫期間
+            const inventoryChange = ((kpi.inventory - prev.inventory) / prev.inventory * 100).toFixed(1);
+            const inventoryT0 = ((kpi.inventory - t0.inventory) / t0.inventory * 100).toFixed(0);
+            kpiCards[4].querySelector('.kpi-value').innerHTML = `${kpi.inventory}<span style="font-size:1rem">日</span>`;
+            kpiCards[4].querySelectorAll('.kpi-trend')[0].innerHTML = `<span>${inventoryChange < 0 ? '↑' : '↓'}</span><span>${inventoryChange > 0 ? '+' : ''}${inventoryChange}% (前月比)</span>`;
+            kpiCards[4].querySelectorAll('.kpi-trend')[0].className = `kpi-trend ${inventoryChange < 0 ? 'trend-up' : 'trend-down'}`;
+            kpiCards[4].querySelectorAll('.kpi-trend')[1].innerHTML = `<span style="font-size:0.85rem">T0比: ${inventoryT0}%</span>`;
+        }
+
+        // グラフ描画関数
+        function drawKpiChart(dealerId, kpiType) {
+            const data = dealersData[dealerId];
+            const ctx = document.getElementById('kpiChart').getContext('2d');
+            
+            // KPIの設定
+            const kpiConfigs = {
+                retail: { label: "中古車小売台数", unit: "台", color: "#3b82f6", targetColor: "#ef4444", bgColor: "rgba(59, 130, 246, 0.1)" },
+                purchase: { label: "総仕入台数", unit: "台", color: "#10b981", targetColor: "#ef4444", bgColor: "rgba(16, 185, 129, 0.1)" },
+                profit: { label: "台当り粗利", unit: "USD", color: "#f59e0b", targetColor: "#ef4444", bgColor: "rgba(245, 158, 11, 0.1)" },
+                leadtime: { label: "商品化リードタイム", unit: "日", color: "#8b5cf6", targetColor: "#10b981", bgColor: "rgba(139, 92, 246, 0.1)", inverse: true },
+                inventory: { label: "販売在庫期間", unit: "日", color: "#ec4899", targetColor: "#10b981", bgColor: "rgba(236, 72, 153, 0.1)", inverse: true }
+            };
+            
+            const config = kpiConfigs[kpiType];
+            const values = data.kpiHistory[kpiType];
+            const currentValue = values[2];
+            const targetValue = values[3];
+            
+            // 既存のチャートを破棄
+            if (currentChart) {
+                currentChart.destroy();
+            }
+            
+            // 新しいチャートを作成
+            currentChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.kpiHistory.labels,
+                    datasets: [{
+                        label: config.label,
+                        data: values,
+                        borderColor: config.color,
+                        backgroundColor: config.bgColor,
+                        borderWidth: 3,
+                        pointRadius: 6,
+                        pointHoverRadius: 8,
+                        pointBackgroundColor: config.color,
+                        fill: true,
+                        tension: 0.3,
+                        segment: {
+                            borderDash: ctx => {
+                                // 現在から目標までを点線に
+                                return ctx.p0DataIndex === 2 ? [5, 5] : undefined;
+                            }
+                        }
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return config.label + ': ' + context.parsed.y + ' ' + config.unit;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + ' ' + config.unit;
+                                }
+                            },
+                            grid: {
+                                color: '#e2e8f0'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // サマリー表示の更新
+            const gap = config.inverse 
+                ? currentValue - targetValue  // 小さい方が良い指標
+                : targetValue - currentValue; // 大きい方が良い指標
+            
+            const gapPercent = Math.abs((gap / currentValue) * 100).toFixed(1);
+            const isGood = config.inverse ? gap > 0 : gap < 0;
+            const gapIcon = isGood ? "✅" : "⚠️";
+            const gapText = config.inverse
+                ? (gap > 0 ? `目標より ${Math.abs(gap)}${config.unit} 長い` : `目標まであと ${Math.abs(gap)}${config.unit}`)
+                : (gap < 0 ? `目標を ${Math.abs(gap)}${config.unit} 超過達成!` : `目標まであと ${gap}${config.unit}`);
+            
+            document.getElementById('chartSummary').innerHTML = `
+                ${gapIcon} <strong>${config.label}</strong>: 
+                現在値 <strong>${currentValue}${config.unit}</strong> → 
+                目標値 <strong>${targetValue}${config.unit}</strong> 
+                (${gapText}, ${gapPercent}%)
+            `;
+        }
+
+        function updateDiagnosisSummary(dealer) {
+            const diag = dealer.diagnosis;
+            
+            // 診断タイプ
+            const diagBadges = document.querySelectorAll('[style*="background:#fbbf24"]');
+            diagBadges.forEach(badge => {
+                const typeName = diag.type === 'A型' ? '順調群' : diag.type === 'B型' ? '一部成功群' : diag.type === 'C型' ? '努力群' : diag.type === 'D型' ? '停滞群' : '危機群';
+                badge.textContent = `${diag.type}: ${typeName}`;
+            });
+            
+            // スコア
+            const progressFills = document.querySelectorAll('.progress-fill');
+            if (progressFills[0]) progressFills[0].style.width = `${diag.score}%`;
+            if (progressFills[1]) progressFills[1].style.width = `${diag.practiceRate}%`;
+            
+            // スコア表示
+            const scoreText = document.querySelector('#dashboard [style*="65 / 100点"]');
+            if (scoreText) scoreText.textContent = `${diag.score} / 100点`;
+            
+            const rateText = document.querySelector('#dashboard [style*="実施率"]');
+            if (rateText) rateText.textContent = `実施率: ${diag.practiceRate}%`;
+        }
+
         function switchPage(pageId) {
-            // Hide all tab panels
+            // すべてのタブパネルを非表示
             const panels = document.querySelectorAll('.tab-panel');
             panels.forEach(panel => {
                 panel.classList.remove('active');
+                panel.style.display = 'none';
             });
             
-            // Remove active class from all nav items
             const navItems = document.querySelectorAll('.nav-item');
-            navItems.forEach(item => {
-                item.classList.remove('active');
-            });
+            navItems.forEach(item => item.classList.remove('active'));
             
-            // Show selected panel
-            document.getElementById(pageId).classList.add('active');
-            
-            // Add active class to corresponding nav item
+            // ナビゲーションアイテムをアクティブに
             const navIndex = ['dashboard', 'analysis', 'learning', 'management', 'community'].indexOf(pageId);
-            navItems[navIndex].classList.add('active');
+            if (navIndex >= 0) {
+                navItems[navIndex].classList.add('active');
+            }
             
-            // Scroll to top
+            // 選択されたページを表示
+            if (pageId === 'dashboard') {
+                // 管理者か代理店かで表示を分ける
+                if (currentDealerId === 'ADMIN') {
+                    document.getElementById('admin-dashboard').classList.add('active');
+                    document.getElementById('admin-dashboard').style.display = 'block';
+                } else {
+                    document.getElementById('dashboard').classList.add('active');
+                    document.getElementById('dashboard').style.display = 'block';
+                }
+            } else {
+                // 他のタブは通常通り表示
+                const targetPanel = document.getElementById(pageId);
+                if (targetPanel) {
+                    targetPanel.classList.add('active');
+                    targetPanel.style.display = 'block';
+                }
+            }
+            
             window.scrollTo(0, 0);
         }
+
+        // ページ読み込み時
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Page loaded');
+            
+            // 初期データ読み込み
+            loadDealerData(currentDealerId);
+            
+            // ドロップダウンイベント（代理店選択）
+            const selector = document.getElementById('dealerSelector');
+            if (selector) {
+                console.log('Selector found');
+                selector.addEventListener('change', function(e) {
+                    console.log('Dealer changed to:', e.target.value);
+                    loadDealerData(e.target.value);
+                });
+            } else {
+                console.error('Selector not found');
+            }
+            
+            // ドロップダウンイベント（KPI選択 - 個別代理店用）
+            const kpiSelector = document.getElementById('kpiSelector');
+            if (kpiSelector) {
+                kpiSelector.addEventListener('change', function(e) {
+                    currentKpiType = e.target.value;
+                    drawKpiChart(currentDealerId, currentKpiType);
+                });
+            }
+            
+            // ドロップダウンイベント（KPI選択 - 管理者用）
+            const adminKpiSelector = document.getElementById('adminKpiSelector');
+            if (adminKpiSelector) {
+                adminKpiSelector.addEventListener('change', function(e) {
+                    currentKpiType = e.target.value;
+                    drawAdminKpiChart(currentKpiType);
+                });
+            }
+        });
     </script>
 </body>
 </html>
